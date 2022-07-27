@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="rapidjson">
+      <UniqueIdentifier>{e88b3247-781b-4c66-957d-91824d8f281a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="workers">
+      <UniqueIdentifier>{b32afd6b-eab9-4cdb-b479-65ab6c125f60}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="workflow.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="worker.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="job.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="fakesrc.cpp">
+      <Filter>workers</Filter>
+    </ClCompile>
+    <ClCompile Include="fakesink.cpp">
+      <Filter>workers</Filter>
+    </ClCompile>
+    <ClCompile Include="delay.cpp">
+      <Filter>workers</Filter>
+    </ClCompile>
+    <ClCompile Include="threadPool.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="terminator.cpp">
+      <Filter>workers</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="workflow.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="worker.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="job.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\rapidjson-master\include\rapidjson\document.h">
+      <Filter>rapidjson</Filter>
+    </ClInclude>
+    <ClInclude Include="fakesrc.h">
+      <Filter>workers</Filter>
+    </ClInclude>
+    <ClInclude Include="fakesink.h">
+      <Filter>workers</Filter>
+    </ClInclude>
+    <ClInclude Include="delay.h">
+      <Filter>workers</Filter>
+    </ClInclude>
+    <ClInclude Include="threadPool.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="terminator.h">
+      <Filter>workers</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
