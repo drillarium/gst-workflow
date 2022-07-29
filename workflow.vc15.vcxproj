@@ -90,6 +90,7 @@
     <ClCompile Include="delay.cpp" />
     <ClCompile Include="fakesink.cpp" />
     <ClCompile Include="fakesrc.cpp" />
+    <ClCompile Include="logger.cpp" />
     <ClCompile Include="job.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="terminator.cpp" />
@@ -102,6 +103,7 @@
     <ClInclude Include="deps\rapidjson-master\include\rapidjson\document.h" />
     <ClInclude Include="fakesink.h" />
     <ClInclude Include="fakesrc.h" />
+    <ClInclude Include="logger.h" />
     <ClInclude Include="terminator.h" />
     <ClInclude Include="job.h" />
     <ClInclude Include="threadPool.h" />

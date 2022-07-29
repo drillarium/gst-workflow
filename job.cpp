@@ -1,13 +1,14 @@
 #include "job.h"
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
+#include "logger.h"
 
 void PRINT_JSON(const char *func, rapidjson::Document &doc)
 {
   rapidjson::StringBuffer buffer;
   rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
   doc.Accept(writer);
-  printf("%s - %s\n", func, buffer.GetString());
+  log_debug("%s - %s\n", func, buffer.GetString());
 }
 
 job::job()
@@ -34,6 +35,8 @@ void job::setUID(const char *value)
   std::string s(value);
   v.SetString(s.c_str(), (rapidjson::SizeType) s.length(), m_jJob.GetAllocator());
   m_jJob.AddMember("uid", v, m_jJob.GetAllocator());
+
+  PRINT_JSON(__FUNCTION__, m_jJob);
 }
 
 const char * job::UID()
@@ -50,6 +53,8 @@ void job::setStatus(EJobStatus status)
     m_jJob["status"] = v;
   else
     m_jJob.AddMember("status", v, m_jJob.GetAllocator());
+
+  PRINT_JSON(__FUNCTION__, m_jJob);
 }
 
 EJobStatus job::status()
@@ -75,6 +80,8 @@ bool job::update(const char *worker, rapidjson::Document &status)
   }
   if(!found)
     m_jJob["log"].GetArray().PushBack(v, m_jJob.GetAllocator());
+
+  PRINT_JSON(__FUNCTION__, m_jJob);
 
   return true;
 }

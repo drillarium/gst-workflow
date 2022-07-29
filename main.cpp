@@ -35,8 +35,16 @@ const char *tmpl = "{\
                      \"uid\" : \"workflow uid\",\
                      \"name\" : \"workflow name\"\
                     }"; */
+
+static void my_log_stdout(ELogSeverity severity, const char *message, void *_private)
+{
+  printf("[%s] %s\n", severityToText(severity), message);
+}
+
 int main()
 {
+  wf_log_set_callback(my_log_stdout, NULL);
+
   workflow wf;
 
   wf.load(tmpl);

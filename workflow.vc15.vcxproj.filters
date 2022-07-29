@@ -44,6 +44,9 @@
     <ClCompile Include="terminator.cpp">
       <Filter>workers</Filter>
     </ClCompile>
+    <ClCompile Include="logger.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="workflow.h">
@@ -72,6 +75,9 @@
     </ClInclude>
     <ClInclude Include="terminator.h">
       <Filter>workers</Filter>
+    </ClInclude>
+    <ClInclude Include="logger.h">
+      <Filter>Header files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

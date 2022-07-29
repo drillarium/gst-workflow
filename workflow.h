@@ -5,18 +5,11 @@
 #include "rapidjson/document.h"
 #include "worker.h"
 #include "job.h"
+#include "logger.h"
 
 /*
- * sample workflow
- * {
- *   type: "workflow",
- *   template: fakesrc name="" ! delay name="" ! fakesink name=""
- *   uid: "",
- *   name: ""
- * }
- * 
+ *
  */
-
 enum EWorkflowStatus
 {
   WF_ST__Stopped = 0,

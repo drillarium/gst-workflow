@@ -1,5 +1,21 @@
 #include "workflow.h"
 
+class workflowStarter
+{
+  public:
+  workflowStarter()
+  {
+    wf_log_set_callback(workflowStarter::wf_log_stdout, this);
+  }
+
+protected:
+  static void wf_log_stdout(ELogSeverity severity, const char *message, void *_private)
+  {
+    printf("[%s] %s\n", severityToText(severity), message);
+  }
+
+} s_starter;
+
 #define TYPE_PARAM "type"
 #define TEMPL_PARAM "template"
 #define NAME_PARAM "name"
