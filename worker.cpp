@@ -1,9 +1,39 @@
 #include "worker.h"
-#include "fakesrc.h"
-#include "fakesink.h"
-#include "delay.h"
-#include "terminator.h"
 #include "workflow.h"
+
+std::map<std::string, workerRegister> *worker::s_register = NULL;
+
+bool worker::register_worker(const char *name, const std::function<worker * ()> &creator, const std::function<void(worker *)> &destructor)
+{
+  printf("Worker: \"%s\" registered\n", name);
+  static std::map<std::string, workerRegister> r;
+  s_register = &r;
+  (*s_register)[name] = { name, creator, destructor};
+
+  return true;
+}
+
+worker * worker::create(const char *name, workflow *wf)
+{
+  if((*s_register).find(name) == (*s_register).end())
+    return NULL;
+
+  worker *w = (*s_register)[name].constr();
+  if(w)
+    w->m_workflow = wf;
+
+  return w;
+}
+
+bool worker::destroy(worker *w)
+{
+  if((*s_register).find(w->name()) == (*s_register).end())
+    return false;
+
+  (*s_register)[w->name()].destr(w);
+
+  return true;
+}
 
 std::string get_param_value_string(const std::list<std::string> &params, const char *key, const char *defValue)
 {
@@ -47,24 +77,6 @@ bool worker::stop()
   m_threadPool.stop();
 
   return true;
-}
-
-worker * worker::create(const char *name, workflow *wf)
-{
-  worker *w = NULL;
-  if(!strcmp(name, "fakesrc"))
-    w = new fakesrc;
-  else if(!strcmp(name, "fakesink"))
-    w = new fakesink;
-  else if(!strcmp(name, "delay"))
-    w = new delay;
-  else if (!strcmp(name, "terminator"))
-    w = new terminator;
-
-  if(w)
-    w->m_workflow = wf;
-
-  return w;
 }
 
 bool worker::setNextWorker(worker *nextWorker, const char *condition)
@@ -147,6 +159,10 @@ bool worker::propagateJob(job *j, const char *condition)
 
     // log
     j->log(__FUNCTION__);
+
+    // aborted?
+    if(j->aborted())
+      m_workflow->removeJob(j->UID());
   }
 
   return true;
@@ -186,24 +202,49 @@ rapidjson::Document worker::buildStatus(EJobStatus status, int progress, const c
 bool worker::processJob(job *j)
 {
   int numPrevWorkers = (int) m_prevWorker.size();
-  
+  bool process = false;
+
   // only one previous worker, job can be consumed
   if(numPrevWorkers <= 1)
-    return true;
-
-  // sync job with num previous workers
-  const char *uid = j->UID();
-  if(m_syncJobs.find(uid) == m_syncJobs.end())
-    m_syncJobs[uid] = 1;
+    process = true;
   else
-    m_syncJobs[uid]++;
-  
-  // job can be propagated
-  if(m_syncJobs[uid] >= numPrevWorkers)
   {
-    m_syncJobs.erase(uid);
-    return true;
+    // sync job with num previous workers
+    const char *uid = j->UID();
+    if(m_syncJobs.find(uid) == m_syncJobs.end())
+      m_syncJobs[uid] = 1;
+    else
+      m_syncJobs[uid]++;
+  
+    // job can be propagated
+    if(m_syncJobs[uid] >= numPrevWorkers)
+    {
+      m_syncJobs.erase(uid);
+      process = true;
+    }
   }
 
-  return false;
+  // if process but abort, return false and delete job
+  if(process && j->aborted())
+  {
+    process = false;
+    // check abort
+    rapidjson::Document status = buildStatus(EJobStatus::JOB_ST__Completed, 0, "Aborted");
+    j->update(m_name.c_str(), status);
+
+    j->setStatus(EJobStatus::JOB_ST__Completed);
+    m_workflow->removeJob(j->UID());
+  }
+
+  return process;
+}
+
+bool worker::hasError(job *j)
+{
+  // check if previous worker finish job with any error
+  bool error = false;
+  for(auto e : m_prevWorker)
+    error |= j->hasError(e.w->name());
+
+  return error;
 }

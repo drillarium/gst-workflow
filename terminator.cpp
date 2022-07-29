@@ -1,5 +1,17 @@
 #include "terminator.h"
 
+/*
+ * register class
+ */
+class terminator_register
+{
+public:
+  terminator_register() { worker::register_worker("terminator", [] { return new terminator; }, [] (worker *w) { delete w; }); }
+} s_register;
+
+/*
+ *
+ */
 terminator::terminator()
 {
   m_type = "terminator";

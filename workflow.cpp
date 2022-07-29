@@ -35,7 +35,7 @@ workflow::~workflow()
 
   // itareta workers
   for(auto e : m_workers)
-    delete e;
+    worker::destroy(e);
   m_workers.clear();
 }
 
@@ -137,14 +137,27 @@ bool workflow::stop()
   if(m_status == EWorkflowStatus::WF_ST__Stopped)
     return true;
 
-  // itareta workers
+  // abort running jobs
+  {
+    std::unique_lock<std::mutex> lock(m_jobsMutex);
+    for(auto e : m_jobs)
+    {
+      if(!e->isCompleted())
+        e->abort();
+    }
+  }
+
+  // iterate workers
   for(auto e : m_workers)
     e->stop();
 
   // clear jobs
-  for(auto e: m_jobs)
-    delete e;
-  m_jobs.clear();
+  {
+    std::unique_lock<std::mutex> lock(m_jobsMutex);
+    for(auto e: m_jobs)
+      delete e;
+    m_jobs.clear();
+  }
 
   // state change
   m_status = EWorkflowStatus::WF_ST__Stopped;
@@ -154,14 +167,44 @@ bool workflow::stop()
 
 bool workflow::addJob(job *j)
 {
+  std::unique_lock<std::mutex> lock(m_jobsMutex);
   m_jobs.push_back(j);
 
   return true;
 }
 
+job * workflow::getJob(const char *jobUID)
+{
+  std::unique_lock<std::mutex> lock(m_jobsMutex);
+  job *j = NULL;
+  for(auto e : m_jobs)
+  {
+    if(!_stricmp(e->UID(), jobUID))
+    {
+      j = e;
+      break;
+    }
+  }
+
+  return j;
+}
+
 bool workflow::removeJob(const char *jobUID)
 {
-  // TODO
+  // mark job as aborted. Workflow will remove it when current worker return job
+  // case completed job can be removed
+  job *j = getJob(jobUID);
+  if(!j)
+    return false;
+
+  if(j->isCompleted())
+  {
+    m_jobs.remove(j);
+    j->log("removeJob");
+    delete j;
+  }
+  else
+    j->abort();
 
   return true;
 }

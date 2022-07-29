@@ -41,6 +41,7 @@ public:
 
 protected:
   worker * getWorkerByName(const char *name);
+  job * getJob(const char *uid);
 
 protected:
   std::string m_uid;                                          // workflow uid
@@ -49,4 +50,5 @@ protected:
   rapidjson::Document m_jWorkflow;                            // loaded workflow
   EWorkflowStatus m_status = EWorkflowStatus::WF_ST__Stopped; // status
   std::list<job *> m_jobs;                                    // jobs
+  std::mutex m_jobsMutex;
 };

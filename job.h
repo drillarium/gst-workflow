@@ -40,12 +40,18 @@ public:
   void setUID(const char *value);
   const char * UID();
   void setStatus(EJobStatus status);
+  EJobStatus status();
   bool update(const char *worker, rapidjson::Document &status);
   void log(const char *message);
+  bool hasError(const char *worker);
+  bool isCompleted() { return status() == EJobStatus::JOB_ST__Completed; }
+  bool abort() { return m_aborted = true; return true; }
+  bool aborted() { return m_aborted; }
 
 protected:
   std::string m_uid;            // job uid
   rapidjson::Document m_jJob;   // JSON job
   std::mutex m_jobMutex;        // prevents data races to the job
+  bool m_aborted = false;       // abort flag
 };
 

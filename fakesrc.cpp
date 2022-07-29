@@ -2,6 +2,18 @@
 #include "workflow.h"
 #include <chrono>
 
+/*
+ * register class
+ */
+class fakesrc_register
+{
+public:
+  fakesrc_register() { worker::register_worker("fakesrc", [] { return new fakesrc; }, [] (worker *w) { delete w; }); }
+} s_register;
+
+/*
+ *
+ */
 fakesrc::fakesrc()
 {
   m_type = "fakesrc";

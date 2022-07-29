@@ -2,21 +2,21 @@
 #include "workflow.h"
 
 // fakesrc -> delay -> fakesink
-/* const char *tmpl = "{\
+const char *tmpl = "{\
                      \"type\": \"workflow\",\
-                     \"template\" : \"fakesrc name='name1' ! delay name='name2' ! fakesink name='name3'\",\
+                     \"template\" : \"fakesrc name='name1' ! delay name='name2' ! delay name='name4' ! fakesink name='name3'\",\
                      \"uid\" : \"workflow uid\",\
                      \"name\" : \"workflow name\"\
-                    }"; */
+                    }";
 
 // fakesrc -> delay -> fakesink -> terminator 
 //         -> delay -> fakesink ->
-const char *tmpl = "{\
+/* const char *tmpl = "{\
                      \"type\": \"workflow\",\
                      \"template\" : \"fakesrc name='name1' ! delay name='name2' ! fakesink name='name3' ! terminator name='name6' name1. ! delay name='name4' ! fakesink name='name5' ! name6.\",\
                      \"uid\" : \"workflow uid\",\
                      \"name\" : \"workflow name\"\
-                    }";
+                    }"; */
 
 // fakesrc -> delay -> fakesink
 //         -> delay ->
@@ -44,9 +44,16 @@ int main()
   wf.start();
 
   // Wait
-  int input;
-  std::cout << ">>";
-  std::cin >> input;
+  int i = 0;
+  while(true)
+  {
+    std::cout << "0 to quit, 1 to abort job";
+    std::cin >> i;
+    if(i == 0)
+      break;
+    if(i == 1)
+      wf.removeJob("0");
+  }
 
   wf.stop();
 

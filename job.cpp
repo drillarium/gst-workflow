@@ -52,6 +52,11 @@ void job::setStatus(EJobStatus status)
     m_jJob.AddMember("status", v, m_jJob.GetAllocator());
 }
 
+EJobStatus job::status()
+{
+  return jobTextToStatus(m_jJob["status"].GetString());
+}
+
 bool job::update(const char *worker, rapidjson::Document &status)
 {
   bool found = false;
@@ -77,4 +82,20 @@ bool job::update(const char *worker, rapidjson::Document &status)
 void job::log(const char *message)
 {
   PRINT_JSON(message, m_jJob);
+}
+
+bool job::hasError(const char *worker)
+{
+  bool error = false;
+
+  bool found = false;
+  for(unsigned int i = 0; i < m_jJob["log"].GetArray().Size() && !found; i++)
+  {
+    rapidjson::Value &val = m_jJob["log"].GetArray()[i].GetObject();
+    found = !_stricmp(worker, val["name"].GetString());
+    if(found)
+      error = (val["error"].GetStringLength() > 0);
+  }
+
+  return error;
 }

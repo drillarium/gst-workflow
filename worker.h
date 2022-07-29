@@ -15,6 +15,13 @@ struct workerCondition
   std::string condition;
 };
 
+struct workerRegister
+{
+  std::string name;
+  std::function<worker * ()> constr;
+  std::function<void(worker *)> destr;
+};
+
 /*
  * worker
  */
@@ -23,7 +30,9 @@ class worker
 {
 public:
   worker();
+  static bool register_worker(const char *name, const std::function<worker * ()> &creator, const std::function<void(worker *)> &destructor);
   static worker * create(const char *name, workflow *wf);
+  static bool destroy(worker *w);
   const char *name() { return m_name.c_str(); }
   int numWorkers() { return m_numWorkers; }
   bool setNextWorker(worker *nextWorker, const char *condition);
@@ -37,6 +46,7 @@ public:
 protected:
   bool propagateJob(job *j, const char *condition = "");
   virtual bool processJob(job *j);
+  bool hasError(job *j);                  // check if previous workers have error
   
 protected:
   std::string m_type;                      // type
@@ -47,4 +57,5 @@ protected:
   threadPool m_threadPool;                 // thread pool
   workflow *m_workflow = NULL;             // workflow
   std::map<std::string, int> m_syncJobs;   // for sync jobs case several input workers
+  static std::map<std::string, workerRegister> *s_register;
 };
