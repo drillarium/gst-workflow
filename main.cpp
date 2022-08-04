@@ -43,12 +43,16 @@ static void my_log_stdout(ELogSeverity severity, const char *message, void *_pri
 
 int main()
 {
+  // redirect log files
   wf_log_set_callback(my_log_stdout, NULL);
 
+  // workflow
   workflow wf;
 
+  // load workflow
   wf.load(tmpl);
 
+  // start it. fakesrc generates jobs
   wf.start();
 
   // Wait

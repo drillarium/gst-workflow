@@ -9,7 +9,7 @@ void threadPool::start(int numThreads)
 {
   // const uint32_t num_threads = std::thread::hardware_concurrency(); // Max # of threads the system supports
   m_threads.resize(numThreads);
-  for(uint32_t i = 0; i < numThreads; i++)
+  for(int i = 0; i < numThreads; i++)
     m_threads.at(i) = std::thread([&] { threadLoop(); });
 }
 

@@ -47,6 +47,9 @@
     <ClCompile Include="logger.cpp">
       <Filter>Source files</Filter>
     </ClCompile>
+    <ClCompile Include="plugin.cpp">
+      <Filter>workers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="workflow.h">
@@ -77,6 +80,12 @@
       <Filter>workers</Filter>
     </ClInclude>
     <ClInclude Include="logger.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="plugin.h">
+      <Filter>workers</Filter>
+    </ClInclude>
+    <ClInclude Include="plugins\include\plugin_helper.h">
       <Filter>Header files</Filter>
     </ClInclude>
   </ItemGroup>
