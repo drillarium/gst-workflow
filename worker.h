@@ -5,6 +5,7 @@
 #include <list>
 #include "threadPool.h"
 #include "job.h"
+#include "logger.h"
 
 /*
  * next / prev worker with condition

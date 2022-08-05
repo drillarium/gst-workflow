@@ -43,7 +43,7 @@ bool fakesrc::processJob(job *j)
   propagateJob(j);
 
   /* iterate */
-  newJob();
+  // newJob();
 
   return true;
 }

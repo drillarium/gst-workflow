@@ -24,7 +24,7 @@ void wf_log_set_callback(void(*fn) (ELogSeverity severity, const char *message, 
   s_fn_param = param;
 }
 
-static void log_(ELogSeverity severity, const char *message)
+void log_(ELogSeverity severity, const char *message)
 {
   if(s_fn)
     s_fn(severity, message, s_fn_param);

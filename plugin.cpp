@@ -5,7 +5,7 @@
   #include <dlfcn.h> //dlopen
 #endif
 #include "plugin.h"
-#include "plugin_helper.h"
+#include "plugin_helper.h" // SPluginWorker
 
 // filesystem
 namespace fs = std::filesystem;
@@ -15,15 +15,17 @@ namespace fs = std::filesystem;
  */
 struct SWFModules
 {
+  std::string moduleName;
   void *h;      // library handle
   // entry points
   void (* init)();
   void (* deinit)();
   const SPluginWorker * (* workers) ();
+  void (* log_set_callback) (void (*fn) (ELogSeverity severity, const char *message, void *_private), void *param);
   
   bool valid()
   {
-    return init && deinit && workers;
+    return init && deinit && workers && log_set_callback;
   }
 };
 
@@ -54,6 +56,11 @@ void * loadSymbol(void *libHandle, const char *sym)
 #endif
 }
 
+void plugin_log(ELogSeverity severity, const char *message, void *_private)
+{
+  log_(severity, message);
+}
+
 /*
  * register class
  */
@@ -82,30 +89,39 @@ public:
           {
             SWFModules mod;
             mod.h = openLib(entry.path().string());
+            mod.moduleName = filenameStr;
             if(mod.h)
             {
               // register
               mod.init = (void (*)()) loadSymbol(mod.h, "init_lib");
-              mod.deinit = (void(*)()) loadSymbol(mod.h, "deinit_lib");
+              mod.deinit = (void (*)()) loadSymbol(mod.h, "deinit_lib");
               mod.workers = (const SPluginWorker * (*) ()) loadSymbol(mod.h, "register_workers");
+              mod.log_set_callback = (void (*) (void (*) (ELogSeverity, const char *, void *), void *)) loadSymbol(mod.h, "log_set_callback");
 
               if(mod.valid())
               {
+                // redirect log
+                mod.log_set_callback(plugin_log, NULL);
+               
                 // init
                 mod.init();
 
                 // register
                 const SPluginWorker *w = mod.workers();
+                while(w)
+                {
+                  // type
+                  std::string type = w->name;
 
-                // type
-                std::string type;
+                  // register plugins
+                  worker::register_worker(type.c_str(), [filenameStr, type] {
+                    return new plugin(filenameStr.c_str(), type.c_str());
+                  }, [](worker *w) {
+                    delete w;
+                  });
 
-                // register plugins
-                worker::register_worker("delay", [filenameStr, type] {
-                  return new plugin(filenameStr.c_str(), type.c_str());
-                }, [](worker *w) {
-                  delete w;
-                });
+                  w = w->next;
+                }
               }
               else
                 closeLib(mod.h);
@@ -146,5 +162,31 @@ plugin::plugin(const char *module, const char *type)
 
 bool plugin::processJob(job *j)
 {
+  if(!worker::processJob(j))
+    return false;
+
+  // has errors
+  if(hasError(j))
+  {
+    // status
+    rapidjson::Document status = buildStatus(EJobStatus::JOB_ST__Completed, 100, "Error in previous worker");
+    j->update(m_name.c_str(), status);
+  }
+  else
+  {
+    // status
+    rapidjson::Document status = buildStatus(EJobStatus::JOB_ST__Running, 0);
+    j->update(m_name.c_str(), status);
+
+    // TODO: process job
+    bool ok = false;
+
+    // check abort
+    status = buildStatus(EJobStatus::JOB_ST__Completed, 100, j->aborted() ? "Aborted" : "");
+    j->update(m_name.c_str(), status);
+  }
+
+  propagateJob(j);
+
   return true;
 }

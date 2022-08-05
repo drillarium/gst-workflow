@@ -4,7 +4,7 @@
 // fakesrc -> delay -> fakesink
 const char *tmpl = "{\
                      \"type\": \"workflow\",\
-                     \"template\" : \"fakesrc name='name1' ! delay name='name2' ! delay name='name4' ! fakesink name='name3'\",\
+                     \"template\" : \"fakesrc name='name1' ! delay name='name2' ! dummy_1 name='name4' ! fakesink name='name3'\",\
                      \"uid\" : \"workflow uid\",\
                      \"name\" : \"workflow name\"\
                     }";
