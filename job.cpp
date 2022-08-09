@@ -8,7 +8,7 @@ void PRINT_JSON(const char *func, rapidjson::Document &doc)
   rapidjson::StringBuffer buffer;
   rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
   doc.Accept(writer);
-  log_debug("%s - %s\n", func, buffer.GetString());
+  log_debug("%s - %s", func, buffer.GetString());
 }
 
 job::job()
@@ -105,4 +105,12 @@ bool job::hasError(const char *worker)
   }
 
   return error;
+}
+
+std::string job::serialize()
+{
+  rapidjson::StringBuffer buffer;
+  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+  m_jJob.Accept(writer);
+  return buffer.GetString();
 }

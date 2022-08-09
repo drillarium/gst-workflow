@@ -47,6 +47,7 @@ public:
   bool isCompleted() { return status() == EJobStatus::JOB_ST__Completed; }
   bool abort() { return m_aborted = true; return true; }
   bool aborted() { return m_aborted; }
+  std::string serialize();
 
 protected:
   std::string m_uid;            // job uid

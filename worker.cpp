@@ -228,6 +228,7 @@ bool worker::processJob(job *j)
   if(process && j->aborted())
   {
     process = false;
+    
     // check abort
     rapidjson::Document status = buildStatus(EJobStatus::JOB_ST__Completed, 0, "Aborted");
     j->update(m_name.c_str(), status);

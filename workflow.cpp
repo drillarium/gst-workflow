@@ -159,7 +159,10 @@ bool workflow::stop()
     for(auto e : m_jobs)
     {
       if(!e->isCompleted())
+      {
         e->abort();
+        onJobAborted(e->UID());
+      }
     }
   }
 
@@ -220,7 +223,10 @@ bool workflow::removeJob(const char *jobUID)
     delete j;
   }
   else
+  {
     j->abort();
+    onJobAborted(j->UID());
+  }
 
   return true;
 }
@@ -234,4 +240,10 @@ worker * workflow::getWorkerByName(const char *name)
   }
 
   return NULL;
+}
+
+void workflow::onJobAborted(const char *jobUID)
+{
+  for(auto e : m_workers)
+    e->onJobAborted(jobUID);
 }

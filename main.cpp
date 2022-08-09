@@ -36,6 +36,15 @@ const char *tmpl = "{\
                      \"name\" : \"workflow name\"\
                     }"; */
 
+// API
+//
+// load workflow
+// add job
+// remove job
+// get job status
+// abort job
+// => job status change
+
 static void my_log_stdout(ELogSeverity severity, const char *message, void *_private)
 {
   printf("[%s] %s\n", severityToText(severity), message);

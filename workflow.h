@@ -35,6 +35,7 @@ public:
 protected:
   worker * getWorkerByName(const char *name);
   job * getJob(const char *uid);
+  void onJobAborted(const char *jobUID);
 
 protected:
   std::string m_uid;                                          // workflow uid

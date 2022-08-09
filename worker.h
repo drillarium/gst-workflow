@@ -43,6 +43,7 @@ public:
   virtual bool stop();
   virtual bool load(const char *param);
   virtual rapidjson::Document buildStatus(EJobStatus status, int progress = 0, const char *error = "");
+  virtual void onJobAborted(const char *jobUID) {}
 
 protected:
   bool propagateJob(job *j, const char *condition = "");
