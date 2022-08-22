@@ -1,0 +1,16 @@
+
+.vs/workflow.vc15/v15/.suo
+*.db
+*.opendb
+*.db-shm
+*.db-wal
+*.wfd
+*.exp
+*.ilk
+*.lib
+*.obj
+*.pdb
+*.tlog
+*.log
+*.idb
+*.exe
