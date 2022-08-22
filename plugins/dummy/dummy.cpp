@@ -22,7 +22,7 @@ public:
     m_abort = true;
     return true;
   }
-  virtual bool process(const char *job, const std::function<void(int)> &onProgress, const std::function<void(const char *, const char *)> &onCompleted) = 0;
+  virtual bool process(const char *job, const std::function<void(int)> &onProgress, const std::function<void(const char *, const char *)> &onCompleted, const std::function<void(const char *, const char *)> &onWork) = 0;
   void setWorkflow(const SWorkflowPad &workflow)
   {
     m_workflow = workflow;
@@ -61,7 +61,7 @@ public:
 
   }
 
-  bool process(const char *jobData, const std::function<void(int)> &onProgress, const std::function<void(const char *, const char *)> &onCompleted)
+  bool process(const char *jobData, const std::function<void(int)> &onProgress, const std::function<void(const char *, const char *)> &onCompleted, const std::function<void(const char *, const char *)> &onWork)
   {
     // build job
     job j(jobData);
@@ -98,7 +98,7 @@ public:
 
   }
 
-  bool process(const char *job, const std::function<void(int)> &onProgress, const std::function<void(const char *, const char *)> &onCompleted)
+  bool process(const char *job, const std::function<void(int)> &onProgress, const std::function<void(const char *, const char *)> &onCompleted, const std::function<void(const char *, const char *)> &onWork)
   {
     return true;
   }
@@ -169,10 +169,10 @@ bool abort_job(void *w, const char *jobUID)
   return dw->abort(jobUID);
 }
 
-bool process_job(void *w, const char *job, const std::function<void(int)> &onProgress, const std::function<void(const char *, const char *)> &onCompleted)
+bool process_job(void *w, const char *job, const std::function<void(int)> &onProgress, const std::function<void(const char *, const char *)> &onCompleted, const std::function<void(const char *, const char *)> &onWork)
 {
   dummyWorker *dw = static_cast<dummyWorker *> (w);
-  return dw->process(job, onProgress, onCompleted);
+  return dw->process(job, onProgress, onCompleted, onWork);
 }
 
 void set_workflow(void *w, const SWorkflowPad &wp)

@@ -20,4 +20,4 @@ extern "C" DUMMY_API bool destroy_worker(void *w);
 extern "C" DUMMY_API void set_workflow(void *w, const SWorkflowPad &wp);
 extern "C" DUMMY_API bool load_worker(void *w, const char *param);
 extern "C" DUMMY_API bool abort_job(void *w, const char *jobUID);
-extern "C" DUMMY_API bool process_job(void *w, const char *job, const std::function<void(int)> &onProgress, const std::function<void(const char *, const char *)> &onCompleted);
+extern "C" DUMMY_API bool process_job(void *w, const char *job, const std::function<void(int)> &onProgress, const std::function<void(const char *, const char *)> &onCompleted, const std::function<void(const char *, const char *)> &onWork);

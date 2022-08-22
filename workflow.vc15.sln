@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dummy", "plugins\dummy\dumm
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "plugins", "plugins", "{F412D143-F6F9-47A3-91B3-F494526C9514}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mformats", "plugins\mformats\mformats.vc15.vcxproj", "{1A1AC0CD-EE7D-472D-8853-7005819E7B9A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -23,12 +25,17 @@ Global
 		{0844444C-5F64-428E-AA05-EE61E2B71A54}.Debug|x64.Build.0 = Debug|x64
 		{0844444C-5F64-428E-AA05-EE61E2B71A54}.Release|x64.ActiveCfg = Release|x64
 		{0844444C-5F64-428E-AA05-EE61E2B71A54}.Release|x64.Build.0 = Release|x64
+		{1A1AC0CD-EE7D-472D-8853-7005819E7B9A}.Debug|x64.ActiveCfg = Debug|x64
+		{1A1AC0CD-EE7D-472D-8853-7005819E7B9A}.Debug|x64.Build.0 = Debug|x64
+		{1A1AC0CD-EE7D-472D-8853-7005819E7B9A}.Release|x64.ActiveCfg = Release|x64
+		{1A1AC0CD-EE7D-472D-8853-7005819E7B9A}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{0844444C-5F64-428E-AA05-EE61E2B71A54} = {F412D143-F6F9-47A3-91B3-F494526C9514}
+		{1A1AC0CD-EE7D-472D-8853-7005819E7B9A} = {F412D143-F6F9-47A3-91B3-F494526C9514}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C440E915-DF1A-4648-9371-6F17EA5C4BE3}

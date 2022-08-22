@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Common files">
+      <UniqueIdentifier>{0875dc98-549e-4305-a2bf-7ed7c121fbed}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\deps\job.cpp">
+      <Filter>Common files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\deps\logger.cpp">
+      <Filter>Common files</Filter>
+    </ClCompile>
+    <ClCompile Include="mformats_worker.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\deps\job.h">
+      <Filter>Common files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\deps\logger.h">
+      <Filter>Common files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\deps\workflow_helper.h">
+      <Filter>Common files</Filter>
+    </ClInclude>
+    <ClInclude Include="mformats_worker.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="MLProtect_MFormats SDK.(subscription_valid_until_25_May_2023).h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

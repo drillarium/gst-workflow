@@ -2,12 +2,12 @@
 #include "workflow.h"
 
 // fakesrc -> delay -> fakesink
-const char *tmpl = "{\
+/* const char *tmpl = "{\
                      \"type\": \"workflow\",\
                      \"template\" : \"fakesrc name='name1' ! delay name='name2' ! dummy_1 name='name4' ! fakesink name='name3'\",\
                      \"uid\" : \"workflow uid\",\
                      \"name\" : \"workflow name\"\
-                    }";
+                    }"; */
 
 // fakesrc -> delay -> fakesink -> terminator 
 //         -> delay -> fakesink ->
@@ -37,12 +37,12 @@ const char *tmpl = "{\
                     }"; */
 
 // filesystemwatcher -> fakesink
-/* const char *tmpl = "{\
+const char *tmpl = "{\
                      \"type\": \"workflow\",\
                      \"template\" : \"filesystemwatcher name='name1' ! delay name='name2' ! fakesink name='name3'\",\
                      \"uid\" : \"workflow uid\",\
                      \"name\" : \"workflow name\"\
-                    }"; */
+                    }";
 // API
 //
 // load workflow

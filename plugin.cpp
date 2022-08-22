@@ -29,7 +29,7 @@ struct SWFModules
   void (* set_workflow) (void *worker, const SWorkflowPad &wp);
   bool (* load) (void *worker, const char *param);
   bool (* abort) (void *worker, const char *jobUID);
-  bool (* process) (void *worker, const char *job, const std::function<void(int)> &onProgress, const std::function<void(const char *, const char *)> &onCompleted);
+  bool (* process) (void *worker, const char *job, const std::function<void(int)> &onProgress, const std::function<void(const char *, const char *)> &onCompleted, const std::function<void(const char *, const char *)> &onWork);
   
   bool valid()
   {
@@ -110,7 +110,7 @@ public:
               mod.set_workflow = (void (*) (void *, const SWorkflowPad &wp)) loadSymbol(mod.h, "set_workflow");
               mod.load = (bool (*) (void *, const char *)) loadSymbol(mod.h, "load_worker");
               mod.abort = (bool (*) (void *, const char *)) loadSymbol(mod.h, "abort_job");
-              mod.process = (bool (*) (void *, const char *, const std::function<void(int)> &, const std::function<void(const char *, const char *)> &)) loadSymbol(mod.h, "process_job");
+              mod.process = (bool (*) (void *, const char *, const std::function<void(int)> &, const std::function<void(const char *, const char *)> &, const std::function<void(const char *, const char *)> &)) loadSymbol(mod.h, "process_job");
 
               if(mod.valid())
               {
@@ -241,7 +241,7 @@ bool plugin::processJob(job *j)
       if(mod)
       {
         std::string jJob = j->serialize();
-        mod->process(m_context, jJob.c_str(),
+        mod->process(m_context, jJob.c_str(),        
         [this, &status, j] (int progress) {
           // progress
           status = buildStatus(EJobStatus::JOB_ST__Running, progress);
@@ -253,7 +253,15 @@ bool plugin::processJob(job *j)
           j->update(m_name.c_str(), status);
 
           condition = cond;
-        });
+        },
+        [this, j](const char *status, const char *work) {
+          // notify work status
+          rapidjson::Document doc;
+          doc.Parse(work);
+          if(!doc.HasParseError())
+            j->updateWork(status, m_name.c_str(), doc);
+        }
+        );
       }
     }
   }
