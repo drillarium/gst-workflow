@@ -1,4 +1,5 @@
 #include "workflow.h"
+#include "rapidjson/writer.h"
 
 class workflowStarter
 {
@@ -130,6 +131,10 @@ bool workflow::load(const char *workflow)
     }
   }
 
+  /* notify workers */
+  for(auto e: m_workers)
+    e->onWorkflowParsed();
+
   return true;
 }
 
@@ -155,7 +160,7 @@ bool workflow::stop()
 
   // abort running jobs
   {
-    std::unique_lock<std::mutex> lock(m_jobsMutex);
+    std::unique_lock<std::recursive_mutex> lock(m_jobsMutex);
     for(auto e : m_jobs)
     {
       if(!e->isCompleted())
@@ -172,7 +177,7 @@ bool workflow::stop()
 
   // clear jobs
   {
-    std::unique_lock<std::mutex> lock(m_jobsMutex);
+    std::unique_lock<std::recursive_mutex> lock(m_jobsMutex);
     for(auto e: m_jobs)
       delete e;
     m_jobs.clear();
@@ -186,7 +191,7 @@ bool workflow::stop()
 
 bool workflow::addJob(job *j)
 {
-  std::unique_lock<std::mutex> lock(m_jobsMutex);
+  std::unique_lock<std::recursive_mutex> lock(m_jobsMutex);
   m_jobs.push_back(j);
 
   return true;
@@ -194,7 +199,7 @@ bool workflow::addJob(job *j)
 
 job * workflow::getJob(const char *jobUID)
 {
-  std::unique_lock<std::mutex> lock(m_jobsMutex);
+  std::unique_lock<std::recursive_mutex> lock(m_jobsMutex);
   job *j = NULL;
   for(auto e : m_jobs)
   {
@@ -246,4 +251,24 @@ void workflow::onJobAborted(const char *jobUID)
 {
   for(auto e : m_workers)
     e->onJobAborted(jobUID);
+}
+
+std::string workflow::serialize()
+{
+  rapidjson::StringBuffer buffer;
+  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+  m_jWorkflow.Accept(writer);
+  return buffer.GetString();
+}
+
+SWorkflowPad workflow::serializeWorkflow()
+{
+  SWorkflowPad wp;
+  if(m_workers.size() > 0)
+  {
+    wp.worker = m_workers.front()->name();
+    m_workers.front()->serializeWorker(wp);
+  }
+
+  return wp;
 }

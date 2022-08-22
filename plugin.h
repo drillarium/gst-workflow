@@ -10,6 +10,7 @@ public:
 
   bool load(const char *param);
   void onJobAborted(const char *jobUID);
+  void onWorkflowParsed();
 
 protected:
   bool processJob(job *j);

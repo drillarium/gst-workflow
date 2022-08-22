@@ -6,6 +6,7 @@
 #include "worker.h"
 #include "job.h"
 #include "logger.h"
+#include "workflow_helper.h"
 
 /*
  *
@@ -31,6 +32,8 @@ public:
   EWorkflowStatus status() { return m_status; }
   bool addJob(job *j);
   bool removeJob(const char *jobUID);
+  std::string serialize();
+  SWorkflowPad serializeWorkflow();
 
 protected:
   worker * getWorkerByName(const char *name);
@@ -44,5 +47,5 @@ protected:
   rapidjson::Document m_jWorkflow;                            // loaded workflow
   EWorkflowStatus m_status = EWorkflowStatus::WF_ST__Stopped; // status
   std::list<job *> m_jobs;                                    // jobs
-  std::mutex m_jobsMutex;
+  std::recursive_mutex m_jobsMutex;
 };

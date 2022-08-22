@@ -5,7 +5,8 @@
   #include <dlfcn.h> //dlopen
 #endif
 #include "plugin.h"
-#include "plugin_helper.h" // SPluginWorker
+#include "workflow_helper.h" // pluginWorker
+#include "workflow.h"
 
 // filesystem
 namespace fs = std::filesystem;
@@ -17,21 +18,22 @@ struct SWFModules
 {
   std::string moduleName;
   void *h;                      // library handle
-  const SPluginWorker *wl;      // from workers()
+  const pluginWorker *wl;      // from workers()
   // entry points
   void (* init)();
   void (* deinit)();
-  const SPluginWorker * (* workers) ();
+  const pluginWorker * (* workers) ();
   void (* log_set_callback) (void (*fn) (ELogSeverity severity, const char *message, void *_private), void *param);
   void * (* create) (const char *type);
   bool (* destroy) (void *worker);
+  void (* set_workflow) (void *worker, const SWorkflowPad &wp);
   bool (* load) (void *worker, const char *param);
   bool (* abort) (void *worker, const char *jobUID);
   bool (* process) (void *worker, const char *job, const std::function<void(int)> &onProgress, const std::function<void(const char *, const char *)> &onCompleted);
   
   bool valid()
   {
-    return init && deinit && workers && log_set_callback && create && destroy && load && abort && process;
+    return init && deinit && workers && log_set_callback && create && destroy && set_workflow && load && abort && process;
   }
 };
 
@@ -101,10 +103,11 @@ public:
               // register
               mod.init = (void (*)()) loadSymbol(mod.h, "init_lib");
               mod.deinit = (void (*)()) loadSymbol(mod.h, "deinit_lib");
-              mod.workers = (const SPluginWorker * (*) ()) loadSymbol(mod.h, "register_workers");
+              mod.workers = (const pluginWorker * (*) ()) loadSymbol(mod.h, "register_workers");
               mod.log_set_callback = (void (*) (void (*) (ELogSeverity, const char *, void *), void *)) loadSymbol(mod.h, "log_set_callback");
               mod.create = (void * (*) (const char *)) loadSymbol(mod.h, "create_worker");
               mod.destroy = (bool (*) (void *)) loadSymbol(mod.h, "destroy_worker");
+              mod.set_workflow = (void (*) (void *, const SWorkflowPad &wp)) loadSymbol(mod.h, "set_workflow");
               mod.load = (bool (*) (void *, const char *)) loadSymbol(mod.h, "load_worker");
               mod.abort = (bool (*) (void *, const char *)) loadSymbol(mod.h, "abort_job");
               mod.process = (bool (*) (void *, const char *, const std::function<void(int)> &, const std::function<void(const char *, const char *)> &)) loadSymbol(mod.h, "process_job");
@@ -119,7 +122,7 @@ public:
 
                 // register
                 mod.wl = mod.workers();
-                const SPluginWorker *w = mod.wl;
+                const pluginWorker *w = mod.wl;
                 while(w)
                 {
                   // type
@@ -165,7 +168,7 @@ public:
     SWFModules *mod = NULL;
     for(auto &e : m_modules)
     {
-      const SPluginWorker *w = e.wl;
+      const pluginWorker *w = e.wl;
       while(w)
       {
         if(!w->name.compare(name))
@@ -279,4 +282,12 @@ void plugin::onJobAborted(const char *jobUID)
   SWFModules *mod = s_modules.findModule(m_type.c_str());
   if(mod)
     mod->abort(m_context, jobUID);
+}
+
+void plugin::onWorkflowParsed()
+{ 
+  SWorkflowPad wp = m_workflow->serializeWorkflow();
+  SWFModules *mod = s_modules.findModule(m_type.c_str());
+  if(mod)
+    mod->set_workflow(m_context, wp);
 }

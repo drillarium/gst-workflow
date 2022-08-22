@@ -59,7 +59,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>./deps/rapidjson-master/include;./plugins/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./deps;./deps/rapidjson-master/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -78,7 +78,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>./deps/rapidjson-master/include;./plugins/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./deps;./deps/rapidjson-master/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -90,10 +90,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="delay.cpp" />
+    <ClCompile Include="deps\job.cpp" />
+    <ClCompile Include="deps\logger.cpp" />
     <ClCompile Include="fakesink.cpp" />
     <ClCompile Include="fakesrc.cpp" />
-    <ClCompile Include="logger.cpp" />
-    <ClCompile Include="job.cpp" />
+    <ClCompile Include="filesystemwatcher.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="plugin.cpp" />
     <ClCompile Include="terminator.cpp" />
@@ -103,14 +104,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="delay.h" />
+    <ClInclude Include="deps\job.h" />
+    <ClInclude Include="deps\logger.h" />
     <ClInclude Include="deps\rapidjson-master\include\rapidjson\document.h" />
+    <ClInclude Include="deps\workflow_helper.h" />
     <ClInclude Include="fakesink.h" />
     <ClInclude Include="fakesrc.h" />
-    <ClInclude Include="logger.h" />
+    <ClInclude Include="filesystemwatcher.h" />
+    <ClInclude Include="filewatcher.h" />
     <ClInclude Include="plugin.h" />
-    <ClInclude Include="plugins\include\plugin_helper.h" />
     <ClInclude Include="terminator.h" />
-    <ClInclude Include="job.h" />
     <ClInclude Include="threadPool.h" />
     <ClInclude Include="worker.h" />
     <ClInclude Include="workflow.h" />

@@ -6,6 +6,7 @@
 #include "threadPool.h"
 #include "job.h"
 #include "logger.h"
+#include "workflow_helper.h"
 
 /*
  * next / prev worker with condition
@@ -44,11 +45,14 @@ public:
   virtual bool load(const char *param);
   virtual rapidjson::Document buildStatus(EJobStatus status, int progress = 0, const char *error = "");
   virtual void onJobAborted(const char *jobUID) {}
+  virtual void onWorkflowParsed() {}
+  void serializeWorker(SWorkflowPad &wp);
 
 protected:
   bool propagateJob(job *j, const char *condition = "");
   virtual bool processJob(job *j);
   bool hasError(job *j);                  // check if previous workers have error
+  virtual void setWorkflow(workflow *w) { m_workflow = w; }
   
 protected:
   std::string m_type;                      // type

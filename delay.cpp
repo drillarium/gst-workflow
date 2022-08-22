@@ -31,6 +31,14 @@ bool delay::processJob(job *j)
   }
   else
   {
+    // work from previous worker
+    rapidjson::Document prevWork = j->getWork(DONE_WORK, m_prevWorker.front().w->name());
+    rapidjson::Value v;
+    v.SetString(m_name.c_str(), (rapidjson::SizeType) m_name.length(), prevWork.GetAllocator());
+    prevWork["name"] = v;
+    v.SetString(m_type.c_str(), (rapidjson::SizeType) m_type.length(), prevWork.GetAllocator());
+    prevWork["type"] = v;
+
     // process
     int i = 0;
     for(i = 0; i<100 && !j->aborted(); i+=10)
@@ -53,6 +61,9 @@ bool delay::processJob(job *j)
     // check abort
     rapidjson::Document status = buildStatus(EJobStatus::JOB_ST__Completed, i, j->aborted()? "Aborted" : "");      
     j->update(m_name.c_str(), status);
+
+    // update work done
+    j->updateWork(DONE_WORK, m_name.c_str(), prevWork);
   }
 
   // condition

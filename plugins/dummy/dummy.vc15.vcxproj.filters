@@ -9,24 +9,33 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
+    <Filter Include="Common files">
+      <UniqueIdentifier>{0875dc98-549e-4305-a2bf-7ed7c121fbed}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dummy.cpp">
       <Filter>Source files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\logger.cpp">
-      <Filter>Source files</Filter>
+    <ClCompile Include="..\..\deps\job.cpp">
+      <Filter>Common files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\deps\logger.cpp">
+      <Filter>Common files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dummy.h">
       <Filter>Header files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\plugin_helper.h">
-      <Filter>Header files</Filter>
+    <ClInclude Include="..\..\deps\job.h">
+      <Filter>Common files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\logger.h">
-      <Filter>Header files</Filter>
+    <ClInclude Include="..\..\deps\logger.h">
+      <Filter>Common files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\deps\workflow_helper.h">
+      <Filter>Common files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

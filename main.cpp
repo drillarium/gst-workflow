@@ -36,14 +36,23 @@ const char *tmpl = "{\
                      \"name\" : \"workflow name\"\
                     }"; */
 
+// filesystemwatcher -> fakesink
+/* const char *tmpl = "{\
+                     \"type\": \"workflow\",\
+                     \"template\" : \"filesystemwatcher name='name1' ! delay name='name2' ! fakesink name='name3'\",\
+                     \"uid\" : \"workflow uid\",\
+                     \"name\" : \"workflow name\"\
+                    }"; */
 // API
 //
 // load workflow
+// get jobs
 // add job
+// abort job
 // remove job
 // get job status
-// abort job
 // => job status change
+//
 
 static void my_log_stdout(ELogSeverity severity, const char *message, void *_private)
 {

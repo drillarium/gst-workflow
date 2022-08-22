@@ -11,4 +11,5 @@ public:
 protected:
   bool processJob(job *j);
   void newJob();
+  rapidjson::Document buildWork();
 };

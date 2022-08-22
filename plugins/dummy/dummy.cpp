@@ -1,19 +1,53 @@
 #include "dummy.h"
+#include "job.h"
 #include <thread>
 
 class dummyWorker
 {
 public:
-  virtual bool load(const char *param) = 0;
+  bool load(const char *param)
+  {
+    std::string token, value;
+    bool ret = parse_token(param, token, value);
+    if(ret)
+    {
+      if(!token.compare("name"))
+        m_name = value;
+    }
+
+    return ret;
+  }
   bool abort(const char *jobUID)
   {
     m_abort = true;
     return true;
   }
   virtual bool process(const char *job, const std::function<void(int)> &onProgress, const std::function<void(const char *, const char *)> &onCompleted) = 0;
+  void setWorkflow(const SWorkflowPad &workflow)
+  {
+    m_workflow = workflow;
+
+    // prev workers
+    searchPrevWorkers(m_workflow);
+  }
 
 protected:
+  void searchPrevWorkers(const SWorkflowPad &wp)
+  {
+    for(auto n : wp.next)
+    {
+      if(!n.worker.compare(m_name))
+        m_prevWorkers.push_back(wp.worker);
+      else
+        searchPrevWorkers(n);
+    }
+  }
+
+protected:
+  std::string m_name;
+  std::list<std::string> m_prevWorkers;   // prev workers name
   bool m_abort = false;
+  SWorkflowPad m_workflow;                // workflow json data
 };
 
 /*
@@ -27,13 +61,16 @@ public:
 
   }
 
-  bool load(const char *param)
+  bool process(const char *jobData, const std::function<void(int)> &onProgress, const std::function<void(const char *, const char *)> &onCompleted)
   {
-    return true;
-  }
+    // build job
+    job j(jobData);
 
-  bool process(const char *job, const std::function<void(int)> &onProgress, const std::function<void(const char *, const char *)> &onCompleted)
-  {
+    // work from previous worker required
+    // list of previous workers by name
+    for(auto e: m_prevWorkers)
+      rapidjson::Document prevWork = j.getWork(DONE_WORK, e.c_str());
+
     // process
     for(int i = 0; i < 100 && !m_abort; i += 10)
     {
@@ -61,16 +98,6 @@ public:
 
   }
 
-  bool load(const char *param)
-  {
-    return true;
-  }
-
-  bool abort(const char *jobUID)
-  {
-    return true;
-  }
-
   bool process(const char *job, const std::function<void(int)> &onProgress, const std::function<void(const char *, const char *)> &onCompleted)
   {
     return true;
@@ -80,12 +107,12 @@ public:
 /*
  *
  */
-const SPluginWorker dummy2 = {
+const pluginWorker dummy2 = {
   "dummy_2",
   NULL
 };
 
-const SPluginWorker s_workers = {
+const pluginWorker s_workers = {
   "dummy_1",
   &dummy2
 };
@@ -103,7 +130,7 @@ void deinit_lib()
   log_info("dummy library deinit");
 }
 
-const SPluginWorker * register_workers()
+const pluginWorker * register_workers()
 {
   return &s_workers;
 }
@@ -146,4 +173,10 @@ bool process_job(void *w, const char *job, const std::function<void(int)> &onPro
 {
   dummyWorker *dw = static_cast<dummyWorker *> (w);
   return dw->process(job, onProgress, onCompleted);
+}
+
+void set_workflow(void *w, const SWorkflowPad &wp)
+{
+  dummyWorker *dw = static_cast<dummyWorker *> (w);
+  return dw->setWorkflow(wp);
 }

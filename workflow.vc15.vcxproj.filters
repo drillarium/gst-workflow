@@ -15,6 +15,9 @@
     <Filter Include="workers">
       <UniqueIdentifier>{b32afd6b-eab9-4cdb-b479-65ab6c125f60}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common files">
+      <UniqueIdentifier>{ae7320b2-f339-494a-9cd3-dfeff220b982}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="workflow.cpp">
@@ -24,9 +27,6 @@
       <Filter>Source files</Filter>
     </ClCompile>
     <ClCompile Include="worker.cpp">
-      <Filter>Source files</Filter>
-    </ClCompile>
-    <ClCompile Include="job.cpp">
       <Filter>Source files</Filter>
     </ClCompile>
     <ClCompile Include="fakesrc.cpp">
@@ -44,11 +44,17 @@
     <ClCompile Include="terminator.cpp">
       <Filter>workers</Filter>
     </ClCompile>
-    <ClCompile Include="logger.cpp">
-      <Filter>Source files</Filter>
-    </ClCompile>
     <ClCompile Include="plugin.cpp">
       <Filter>workers</Filter>
+    </ClCompile>
+    <ClCompile Include="filesystemwatcher.cpp">
+      <Filter>workers</Filter>
+    </ClCompile>
+    <ClCompile Include="deps\job.cpp">
+      <Filter>Common files</Filter>
+    </ClCompile>
+    <ClCompile Include="deps\logger.cpp">
+      <Filter>Common files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -56,9 +62,6 @@
       <Filter>Header files</Filter>
     </ClInclude>
     <ClInclude Include="worker.h">
-      <Filter>Header files</Filter>
-    </ClInclude>
-    <ClInclude Include="job.h">
       <Filter>Header files</Filter>
     </ClInclude>
     <ClInclude Include="deps\rapidjson-master\include\rapidjson\document.h">
@@ -79,14 +82,23 @@
     <ClInclude Include="terminator.h">
       <Filter>workers</Filter>
     </ClInclude>
-    <ClInclude Include="logger.h">
-      <Filter>Header files</Filter>
-    </ClInclude>
     <ClInclude Include="plugin.h">
       <Filter>workers</Filter>
     </ClInclude>
-    <ClInclude Include="plugins\include\plugin_helper.h">
-      <Filter>Header files</Filter>
+    <ClInclude Include="filewatcher.h">
+      <Filter>workers</Filter>
+    </ClInclude>
+    <ClInclude Include="filesystemwatcher.h">
+      <Filter>workers</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\job.h">
+      <Filter>Common files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\logger.h">
+      <Filter>Common files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\workflow_helper.h">
+      <Filter>Common files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

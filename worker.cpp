@@ -1,5 +1,6 @@
 #include "worker.h"
 #include "workflow.h"
+#include "workflow_helper.h"
 
 std::map<std::string, workerRegister> *worker::s_register = NULL;
 
@@ -20,7 +21,7 @@ worker * worker::create(const char *name, workflow *wf)
 
   worker *w = (*s_register)[name].constr();
   if(w)
-    w->m_workflow = wf;
+    w->setWorkflow(wf);
 
   return w;
 }
@@ -93,30 +94,17 @@ bool worker::setPrevWorker(worker *prevWorker, const char *condition)
 
 bool worker::load(const char *_param)
 {
-  std::string delimiter = "=";
-  std::string param(_param);
-  size_t pos = param.find(delimiter);
-  if(pos != std::string::npos)
+  std::string token, value;
+  bool ret = parse_token(_param, token, value);
+  if(ret)
   {
-    std::string token = param.substr(0, pos);
-    std::string value = param.substr(pos + 1, -1);
     if(token == "name")
-    {
-      value.erase(0, 1);
-      value.erase(value.size() - 1);
-      if(value.length() == 0)
-      {
-        char aux[256];
-        sprintf_s(aux, "%p", (void *) this);
-        value = aux;
-      }
       m_name = value;
-    }
     else if(token == "workers")
-      value = atoi(value.c_str());
+      m_numWorkers = atoi(value.c_str());
   }
 
-  return true;
+  return ret;
 }
 
 bool worker::pushJob(job *j)
@@ -248,4 +236,14 @@ bool worker::hasError(job *j)
     error |= j->hasError(e.w->name());
 
   return error;
+}
+
+void worker::serializeWorker(SWorkflowPad &wp)
+{
+  for(auto wc : m_nextWorker)
+  {
+    SWorkflowPad wpn = { wc.condition, wc.w->name() };
+    wc.w->serializeWorker(wpn);
+    wp.next.push_back(wpn);
+  }
 }
