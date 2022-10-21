@@ -18,7 +18,7 @@ struct SWFModules
 {
   std::string moduleName;
   void *h;                      // library handle
-  const pluginWorker *wl;      // from workers()
+  const pluginWorker *wl;       // from workers()
   // entry points
   void (* init)();
   void (* deinit)();
@@ -26,8 +26,8 @@ struct SWFModules
   void (* log_set_callback) (void (*fn) (ELogSeverity severity, const char *message, void *_private), void *param);
   void * (* create) (const char *type);
   bool (* destroy) (void *worker);
-  void (* set_workflow) (void *worker, const SWorkflowPad &wp);
-  bool (* load) (void *worker, const char *param);
+  void (* set_workflow) (void *worker, const char *pipe);
+  bool (* load) (void *worker, const char *param, const char *value);
   bool (* abort) (void *worker, const char *jobUID);
   bool (* process) (void *worker, const char *job, const std::function<void(int)> &onProgress, const std::function<void(const char *, const char *)> &onCompleted, const std::function<void(const char *, const char *)> &onWork);
   
@@ -104,11 +104,11 @@ public:
               mod.init = (void (*)()) loadSymbol(mod.h, "init_lib");
               mod.deinit = (void (*)()) loadSymbol(mod.h, "deinit_lib");
               mod.workers = (const pluginWorker * (*) ()) loadSymbol(mod.h, "register_workers");
-              mod.log_set_callback = (void (*) (void (*) (ELogSeverity, const char *, void *), void *)) loadSymbol(mod.h, "log_set_callback");
+              mod.log_set_callback = (void (*) (void (*) (ELogSeverity, const char *, void *), void *)) loadSymbol(mod.h, "log_set_callback_");
               mod.create = (void * (*) (const char *)) loadSymbol(mod.h, "create_worker");
               mod.destroy = (bool (*) (void *)) loadSymbol(mod.h, "destroy_worker");
-              mod.set_workflow = (void (*) (void *, const SWorkflowPad &wp)) loadSymbol(mod.h, "set_workflow");
-              mod.load = (bool (*) (void *, const char *)) loadSymbol(mod.h, "load_worker");
+              mod.set_workflow = (void (*) (void *, const char *pipe)) loadSymbol(mod.h, "set_workflow");
+              mod.load = (bool (*) (void *, const char *, const char *)) loadSymbol(mod.h, "load_worker");
               mod.abort = (bool (*) (void *, const char *)) loadSymbol(mod.h, "abort_job");
               mod.process = (bool (*) (void *, const char *, const std::function<void(int)> &, const std::function<void(const char *, const char *)> &, const std::function<void(const char *, const char *)> &)) loadSymbol(mod.h, "process_job");
 
@@ -129,7 +129,7 @@ public:
                   std::string type = w->name;
 
                   // register plugins
-                  worker::register_worker(type.c_str(), [filenameStr, type] {
+                  worker::register_worker(type.c_str(), w->params.c_str(), [filenameStr, type] {
                     return new plugin(filenameStr.c_str(), type.c_str());
                   }, [](worker *w) {
                     delete w;
@@ -193,6 +193,9 @@ plugin::plugin(const char *module, const char *type)
 {
   m_type = type;
 
+  // register
+  job::registerListener(this);
+
   // create
   SWFModules *mod = s_modules.findModule(m_type.c_str());
   if(mod)
@@ -201,6 +204,9 @@ plugin::plugin(const char *module, const char *type)
 
 plugin::~plugin()
 {
+  // unregister
+  job::unregisterListener(this);
+
   // destroy
   SWFModules *mod = s_modules.findModule(m_type.c_str());
   if(mod)
@@ -208,94 +214,63 @@ plugin::~plugin()
   m_context = NULL;
 }
 
-bool plugin::processJob(job *j)
+bool plugin::doJob(job *j, std::string &condition, std::string &error)
 {
-  if(!worker::processJob(j))
-    return false;
-
-  std::string condition;
-
-  // has errors
-  if(hasError(j))
+  // process job
+  SWFModules *mod = s_modules.findModule(m_type.c_str());
+  if(mod)
   {
-    // status
-    rapidjson::Document status = buildStatus(EJobStatus::JOB_ST__Completed, 100, "Error in previous worker");
-    j->update(m_name.c_str(), status);
-  }
-  else
-  {
-    if(!m_context)
-    {
-      // status
-      rapidjson::Document status = buildStatus(EJobStatus::JOB_ST__Completed, 100, "Error invalid plugin");
-      j->update(m_name.c_str(), status);
-    }
-    else
-    {
-      // status
-      rapidjson::Document status = buildStatus(EJobStatus::JOB_ST__Running, 0);
-      j->update(m_name.c_str(), status);
+    // workflow
+    mod->set_workflow(m_context, m_workflow->pipe());
 
-      // process job
-      SWFModules *mod = s_modules.findModule(m_type.c_str());
-      if(mod)
-      {
-        std::string jJob = j->serialize();
-        mod->process(m_context, jJob.c_str(),        
-        [this, &status, j] (int progress) {
-          // progress
-          status = buildStatus(EJobStatus::JOB_ST__Running, progress);
-          j->update(m_name.c_str(), status);
-        },
-        [this, &status, &condition, j] (const char *error, const char *cond) {
-          // check abort
-          status = buildStatus(EJobStatus::JOB_ST__Completed, 100, j->aborted() ? "Aborted" : (error? error : ""));
-          j->update(m_name.c_str(), status);
+    // process
+    std::string jJob = j->serialize();
+    int jobProgress = 0;
+    mod->process(m_context, jJob.c_str(),
+      // onProgress
+      [this, j, &jobProgress] (int progress) {
+        updateStatus(j, EJobStatus::JOB_ST__Running, progress);
+        jobProgress = progress;
+      },
+      // onCompleted
+      [&condition, &error] (const char *err, const char *cond) {
+        error = err;
+        condition = cond;
+      },
+      // onWork
+      [this, j, &jobProgress] (const char *status, const char *jWork) {
 
-          condition = cond;
-        },
-        [this, j](const char *status, const char *work) {
-          // notify work status
-          rapidjson::Document doc;
-          doc.Parse(work);
-          if(!doc.HasParseError())
-            j->updateWork(status, m_name.c_str(), doc);
-        }
-        );
+        rapidjson::Document doc = updateStatus(EJobStatus::JOB_ST__Running, jobProgress);
+
+        // work
+        rapidjson::Document work;
+        work.Parse(jWork);
+        
+        // work
+        doc.AddMember("work", work, doc.GetAllocator());
+
+        j->updateStatus(m_name.c_str(), m_type.c_str(), work);
       }
-    }
+    );
   }
-
-  propagateJob(j, condition.c_str());
 
   return true;
 }
 
-bool plugin::load(const char *param)
+bool plugin::load(const char *param, const char *value)
 {
-  bool ret = worker::load(param);
-  if(ret)
-  {
-    SWFModules *mod = s_modules.findModule(m_type.c_str());
-    if(mod)
-      ret = mod->load(m_context, param);
-  }
+  worker::load(param, value);
 
-  return ret;
+  SWFModules *mod = s_modules.findModule(m_type.c_str());
+  if(mod)
+    mod->load(m_context, param, value);
+
+  return true;
 }
 
 void plugin::onJobAborted(const char *jobUID)
 {
-  worker::onJobAborted(jobUID);
   SWFModules *mod = s_modules.findModule(m_type.c_str());
   if(mod)
     mod->abort(m_context, jobUID);
-}
-
-void plugin::onWorkflowParsed()
-{ 
-  SWorkflowPad wp = m_workflow->serializeWorkflow();
-  SWFModules *mod = s_modules.findModule(m_type.c_str());
-  if(mod)
-    mod->set_workflow(m_context, wp);
 }

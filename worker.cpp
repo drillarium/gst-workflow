@@ -4,12 +4,12 @@
 
 std::map<std::string, workerRegister> *worker::s_register = NULL;
 
-bool worker::register_worker(const char *name, const std::function<worker * ()> &creator, const std::function<void(worker *)> &destructor)
+bool worker::register_worker(const char *name, const char *params, const std::function<worker * ()> &creator, const std::function<void(worker *)> &destructor)
 {
   printf("Worker: \"%s\" registered\n", name);
   static std::map<std::string, workerRegister> r;
   s_register = &r;
-  (*s_register)[name] = { name, creator, destructor};
+  (*s_register)[name] = { name, params, creator, destructor};
 
   return true;
 }
@@ -21,7 +21,7 @@ worker * worker::create(const char *name, workflow *wf)
 
   worker *w = (*s_register)[name].constr();
   if(w)
-    w->setWorkflow(wf);
+    w->m_workflow = wf;
 
   return w;
 }
@@ -97,14 +97,26 @@ bool worker::load(const char *_param)
   std::string token, value;
   bool ret = parse_token(_param, token, value);
   if(ret)
-  {
-    if(token == "name")
-      m_name = value;
-    else if(token == "workers")
-      m_numWorkers = atoi(value.c_str());
-  }
+    load(token.c_str(), value.c_str());
 
   return ret;
+}
+
+bool worker::load(const char *param, const char *value)
+{
+  if(!_stricmp(param, "name"))
+  {
+    m_name = value;
+    return true;
+  }
+
+  if(!_stricmp(param, "workers"))
+  {
+    m_numWorkers = atoi(value);
+    return true;
+  }
+
+  return false;
 }
 
 bool worker::pushJob(job *j)
@@ -113,14 +125,9 @@ bool worker::pushJob(job *j)
     return false;
 
   // waiting
-  rapidjson::Document status = buildStatus(EJobStatus::JOB_ST__Waiting);
-  j->update(m_name.c_str(), status);
+  updateStatus(j, EJobStatus::JOB_ST__Waiting);
 
   m_threadPool.queueJob([this, j] {
-    // status
-    rapidjson::Document status = buildStatus(EJobStatus::JOB_ST__Running, 0);
-    j->update(m_name.c_str(), status);
-
     processJob(j);
   });
 
@@ -129,48 +136,59 @@ bool worker::pushJob(job *j)
 
 bool worker::propagateJob(job *j, const char *condition)
 {
+  bool completed = (m_nextWorker.size() == 0);
+
   // push job
-  if(m_nextWorker.size() > 0)
+  if(!completed)
   {
+    // case no next found, mark as completed
+    completed = true;
     for(auto e : m_nextWorker)
     {
       // check condition
       if(e.condition.empty() || !e.condition.compare(condition))
+      {
+        completed = false;
         e.w->pushJob(j);
+      }
     }
   }
 
-  if(m_nextWorker.size() == 0)
+  if(completed)
   {
     // mark as completed
     j->setStatus(EJobStatus::JOB_ST__Completed);
-
-    // log
-    j->log(__FUNCTION__);
-
-    // aborted?
-    if(j->aborted())
-      m_workflow->removeJob(j->UID());
   }
 
   return true;
 }
 
-rapidjson::Document worker::buildStatus(EJobStatus status, int progress, const char *error)
+bool worker::updateStatus(job *j, EJobStatus status, int progress, const char *error)
 {
+  rapidjson::Document doc = updateStatus(status, progress, error);
+ 
+  // keep work
+  rapidjson::Document currentStatus = j->status(m_name.c_str());
+  if(!currentStatus.IsNull())
+  {
+    if(currentStatus.HasMember("work"))
+      doc.AddMember("work", currentStatus["work"], doc.GetAllocator());
+  }
+
+  // update job
+  j->updateStatus(m_name.c_str(), m_type.c_str(), doc);
+
+  return true;
+}
+
+rapidjson::Document worker::updateStatus(EJobStatus status, int progress, const char *error)
+{
+  // new document
   rapidjson::Document doc;
   doc.SetObject();
 
-  // name
-  rapidjson::Value v;
-  v.SetString(m_name.c_str(), (rapidjson::SizeType) m_name.length(), doc.GetAllocator());
-  doc.AddMember("name", v, doc.GetAllocator());
-
-  // name
-  v.SetString(m_type.c_str(), (rapidjson::SizeType) m_type.length(), doc.GetAllocator());
-  doc.AddMember("type", v, doc.GetAllocator());
-
   // status
+  rapidjson::Value v;
   std::string s(jobStatusToText(status));
   v.SetString(s.c_str(), (rapidjson::SizeType) s.length(), doc.GetAllocator());
   doc.AddMember("status", v, doc.GetAllocator());
@@ -189,12 +207,17 @@ rapidjson::Document worker::buildStatus(EJobStatus status, int progress, const c
 
 bool worker::processJob(job *j)
 {
+  // status
+  updateStatus(j, EJobStatus::JOB_ST__Running, 0);
+
+  // workers
   int numPrevWorkers = (int) m_prevWorker.size();
   bool process = false;
 
   // only one previous worker, job can be consumed
   if(numPrevWorkers <= 1)
     process = true;
+  // the work will be done when slowest previos worker ends (case parallel workers)
   else
   {
     // sync job with num previous workers
@@ -213,37 +236,30 @@ bool worker::processJob(job *j)
   }
 
   // if process but abort, return false and delete job
-  if(process && j->aborted())
+  if(process)
   {
-    process = false;
-    
-    // check abort
-    rapidjson::Document status = buildStatus(EJobStatus::JOB_ST__Completed, 0, "Aborted");
-    j->update(m_name.c_str(), status);
+    bool success = true;
+    std::string error, condition;
 
-    j->setStatus(EJobStatus::JOB_ST__Completed);
-    m_workflow->removeJob(j->UID());
+    // Do the job. check aborted flag
+    if(!j->aborted())
+    {
+      success = doJob(j, condition, error);
+      // completed
+      updateStatus(j, EJobStatus::JOB_ST__Completed, 100, j->aborted() ? ABORTED_ERROR : error.c_str());
+    }
+
+    // mark as completed
+    if(j->aborted() || !success || (error.length() > 0) )
+    {
+      j->setStatus(EJobStatus::JOB_ST__Completed);
+      j->setError(j->aborted()? ABORTED_ERROR : error.c_str());
+    }
+
+    /* send to the nexts workers */
+    if(j->status() != EJobStatus::JOB_ST__Completed)
+      propagateJob(j, condition.c_str());
   }
 
-  return process;
-}
-
-bool worker::hasError(job *j)
-{
-  // check if previous worker finish job with any error
-  bool error = false;
-  for(auto e : m_prevWorker)
-    error |= j->hasError(e.w->name());
-
-  return error;
-}
-
-void worker::serializeWorker(SWorkflowPad &wp)
-{
-  for(auto wc : m_nextWorker)
-  {
-    SWorkflowPad wpn = { wc.condition, wc.w->name() };
-    wc.w->serializeWorker(wpn);
-    wp.next.push_back(wpn);
-  }
+  return true;
 }

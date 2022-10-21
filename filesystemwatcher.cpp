@@ -1,36 +1,24 @@
-#include "filesystemwatcher.h"
 #include "workflow.h"
+#include "worker.h"
+#include "filewatcher.h"
 
-/*
- * register class
- */
-class filesystemwatcher_register
+class filesystemwatcher : public worker
 {
 public:
-  filesystemwatcher_register() { worker::register_worker("filesystemwatcher", [] { return new filesystemwatcher; }, [](worker *w) { delete w; }); }
-} s_register;
-
-/*
- *
- */
-filesystemwatcher::filesystemwatcher()
-{
-  m_type = "filesystemwatcher";
-}
-
-bool filesystemwatcher::load(const char *_param)
-{
-  return worker::load(_param);
-}
-
-bool filesystemwatcher::start()
-{
-  bool ret = worker::start();
-  if(ret)
+  filesystemwatcher()
   {
+    m_type = "filesystemwatcher";
+  }
+
+  bool start()
+  {
+    bool ret = worker::start();
+    if(!ret)
+      return false;
+
     m_threadPool.queueJob([this] {
       // Create a FileWatcher instance that will check the current folder for changes every 5 seconds
-      FileWatcher fw{"./", std::chrono::milliseconds(5000)};
+      FileWatcher fw{ m_path.c_str(), std::chrono::milliseconds(5000)};
       m_fw = &fw;
  
       // Start monitoring a folder for changes and (in case of changes)
@@ -48,16 +36,16 @@ bool filesystemwatcher::start()
 
             /* create job */
             job *j = new job;
+            j->setName(path_to_watch.c_str());
 
-            /* add work done */
-            rapidjson::Document work = buildWork(status, path_to_watch.c_str());
-            j->updateWork(DONE_WORK, m_name.c_str(), work);
+            /* add work */
+            updateWork(j, status, path_to_watch.c_str());
 
             /* register in workflow */
             m_workflow->addJob(j);
 
             /* send to the nexts workers */
-            propagateJob(j);
+            pushJob(j);
           }
           break;
           case FileStatus::modified:
@@ -66,16 +54,16 @@ bool filesystemwatcher::start()
 
             /* create job */
             job *j = new job;
+            j->setName(path_to_watch.c_str());
 
-            /* add work done */
-            rapidjson::Document work = buildWork(status, path_to_watch.c_str());
-            j->updateWork(DONE_WORK, m_name.c_str(), work);
+            /* add work*/
+            updateWork(j, status, path_to_watch.c_str());
 
             /* register in workflow */
             m_workflow->addJob(j);
 
             /* send to the nexts workers */
-            propagateJob(j);
+            pushJob(j);
           }
           break;
           case FileStatus::erased:
@@ -88,54 +76,83 @@ bool filesystemwatcher::start()
 
       m_fw = NULL;
     });
+
+    return true;
   }
 
-  return ret;
-}
+  bool doJob(job *j, std::string &condition, std::string &error) { return true; }
 
-bool filesystemwatcher::stop()
+  bool stop()
+  {
+    // stop filesystemwatcher
+    if(m_fw)
+      m_fw->stop();
+
+    // stop worker
+    return worker::stop();
+  }
+
+  bool load(const char *param, const char *value)
+  {
+    if(worker::load(param, value))
+      return true;
+
+    if(!_stricmp(param, "path"))
+    {
+      m_path = value;
+      return true;
+    }
+
+    return false;
+  }
+
+protected:
+  static const char * fileStatusToText(FileStatus status)
+  {
+    if(status == FileStatus::created) return "created";
+    if(status == FileStatus::modified) return "modified";
+    if(status == FileStatus::erased) return "erased";
+    return "???";
+  }
+
+  bool updateWork(job *j, FileStatus status, const char *file)
+  {
+    rapidjson::Document doc = updateStatus();
+
+    rapidjson::Document work;
+    work.SetObject();
+
+    // file
+    rapidjson::Value v;
+    std::string f(file);
+    v.SetString(f.c_str(), (rapidjson::SizeType) f.length(), work.GetAllocator());
+    work.AddMember("file", v, work.GetAllocator());
+
+    // status
+    std::string s(fileStatusToText(status));
+    v.SetString(s.c_str(), (rapidjson::SizeType) s.length(), work.GetAllocator());
+    work.AddMember("status", v, work.GetAllocator());
+
+    // work
+    doc.AddMember("work", work, doc.GetAllocator());
+
+    // update job
+    j->updateStatus(m_name.c_str(), m_type.c_str(), doc);
+
+    return true;
+  }
+
+protected:
+  FileWatcher *m_fw = NULL;
+  std::string m_path = "./";
+};
+
+/*
+ * register class
+ */
+class filesystemwatcher_register
 {
-  // stop filesystemwatcher
-  if(m_fw)
-    m_fw->stop();
+public:
+  filesystemwatcher_register() { worker::register_worker("filesystemwatcher", "name,path", [] { return new filesystemwatcher; }, [](worker *w) { delete w; }); }
+} s_register;
 
-  // stop worker
-  worker::stop();
-
-  return true;
-}
-
-static const char * fileStatusToText(FileStatus status)
-{
-  if (status == FileStatus::created) return "created";
-  if (status == FileStatus::modified) return "modified";
-  if (status == FileStatus::erased) return "erased";
-  return "???";
-}
-
-rapidjson::Document filesystemwatcher::buildWork(FileStatus status, const char *file)
-{
-  rapidjson::Document doc;
-  doc.SetObject();
-
-  // name
-  rapidjson::Value v;
-  v.SetString(m_name.c_str(), (rapidjson::SizeType) m_name.length(), doc.GetAllocator());
-  doc.AddMember("name", v, doc.GetAllocator());
-
-  // type
-  v.SetString(m_type.c_str(), (rapidjson::SizeType) m_type.length(), doc.GetAllocator());
-  doc.AddMember("type", v, doc.GetAllocator());
-
-  // file
-  std::string f(file);
-  v.SetString(f.c_str(), (rapidjson::SizeType) f.length(), doc.GetAllocator());
-  doc.AddMember("file", v, doc.GetAllocator());
-
-  // status
-  std::string s(fileStatusToText(status));
-  v.SetString(s.c_str(), (rapidjson::SizeType) s.length(), doc.GetAllocator());
-  doc.AddMember("status", v, doc.GetAllocator());
-
-  return doc;
-}

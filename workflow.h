@@ -7,9 +7,10 @@
 #include "job.h"
 #include "logger.h"
 #include "workflow_helper.h"
+#include "notifier.h"
 
 /*
- *
+ * workflow status
  */
 enum EWorkflowStatus
 {
@@ -32,13 +33,11 @@ public:
   EWorkflowStatus status() { return m_status; }
   bool addJob(job *j);
   bool removeJob(const char *jobUID);
-  std::string serialize();
-  SWorkflowPad serializeWorkflow();
+  const char * pipe();
 
 protected:
   worker * getWorkerByName(const char *name);
   job * getJob(const char *uid);
-  void onJobAborted(const char *jobUID);
 
 protected:
   std::string m_uid;                                          // workflow uid
@@ -47,5 +46,5 @@ protected:
   rapidjson::Document m_jWorkflow;                            // loaded workflow
   EWorkflowStatus m_status = EWorkflowStatus::WF_ST__Stopped; // status
   std::list<job *> m_jobs;                                    // jobs
-  std::recursive_mutex m_jobsMutex;
+  std::recursive_mutex m_jobsMutex;                           // access jobs
 };

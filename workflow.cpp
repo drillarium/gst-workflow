@@ -1,24 +1,77 @@
+#include <iostream>
 #include "workflow.h"
 #include "rapidjson/writer.h"
+
+const char START_DELIMITER[] = "A1ADF546";
+const char END_DELIMITER[] = "277223DE";
 
 class workflowStarter
 {
   public:
   workflowStarter()
   {
-    wf_log_set_callback(workflowStarter::wf_log_stdout, this);
+    log_set_callback(workflowStarter::log_stdout, this);
+    wf_set_callback(workflowStarter::notification_stdout, this);
   }
 
 protected:
-  static void wf_log_stdout(ELogSeverity severity, const char *message, void *_private)
+  static void log_stdout(ELogSeverity severity, const char *message, void *_private)
   {
-    printf("[%s] %s\n", severityToText(severity), message);
+    rapidjson::Document doc;
+
+    doc.SetObject();
+
+    rapidjson::Value v;
+    std::string s("log_message");
+    v.SetString(s.c_str(), (rapidjson::SizeType) s.length(), doc.GetAllocator());
+    doc.AddMember("message", v, doc.GetAllocator());
+
+    rapidjson::Document argsDoc;
+    argsDoc.SetObject();
+
+    s = severityToText(severity);
+    v.SetString(s.c_str(), (rapidjson::SizeType) s.length(), argsDoc.GetAllocator());
+    argsDoc.AddMember("severity", v, argsDoc.GetAllocator());
+
+    s = message;
+    v.SetString(s.c_str(), (rapidjson::SizeType) s.length(), argsDoc.GetAllocator());
+    argsDoc.AddMember("message", v, argsDoc.GetAllocator());
+
+    doc.AddMember("args", argsDoc, doc.GetAllocator());
+
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    doc.Accept(writer);
+
+    std::cout << START_DELIMITER << buffer.GetString() << END_DELIMITER << std::flush;
+  }
+
+  static void notification_stdout(const char *message, const char *args, void *_private)
+  {
+    rapidjson::Document doc;
+
+    doc.SetObject();
+
+    rapidjson::Value v;
+    std::string s(message);
+    v.SetString(s.c_str(), (rapidjson::SizeType) s.length(), doc.GetAllocator());
+    doc.AddMember("message", v, doc.GetAllocator());
+
+    rapidjson::Document argsDoc;
+    argsDoc.Parse(args);
+    doc.AddMember("args", argsDoc, doc.GetAllocator());
+
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    doc.Accept(writer);
+
+    std::cout << START_DELIMITER << buffer.GetString() << END_DELIMITER << std::flush;
   }
 
 } s_starter;
 
 #define TYPE_PARAM "type"
-#define TEMPL_PARAM "template"
+#define PIPE_PARAM "pipe"
 #define NAME_PARAM "name"
 #define UID_PARAM "uid"
 
@@ -71,7 +124,7 @@ bool workflow::load(const char *workflow)
     return false;
 
   // template
-  if(!m_jWorkflow.HasMember(TEMPL_PARAM) || !m_jWorkflow[TEMPL_PARAM].IsString() )
+  if(!m_jWorkflow.HasMember(PIPE_PARAM) || !m_jWorkflow[PIPE_PARAM].IsString() )
     return false;
 
   // name
@@ -82,7 +135,7 @@ bool workflow::load(const char *workflow)
   if(m_jWorkflow.HasMember(UID_PARAM) && m_jWorkflow[UID_PARAM].IsString())
     m_uid = m_jWorkflow[UID_PARAM].GetString();
 
-  const char *templ = m_jWorkflow[TEMPL_PARAM].GetString();
+  const char *templ = m_jWorkflow[PIPE_PARAM].GetString();
   if(!templ)
     return false;
 
@@ -114,6 +167,10 @@ bool workflow::load(const char *workflow)
           nw = worker::create(e.c_str(), this);
           if(nw)
             m_workers.push_back(nw);
+          else
+          {
+            // TODO
+          }
         }
         if(isDelimiter && nw && w)
         {
@@ -130,10 +187,6 @@ bool workflow::load(const char *workflow)
       }
     }
   }
-
-  /* notify workers */
-  for(auto e: m_workers)
-    e->onWorkflowParsed();
 
   return true;
 }
@@ -161,13 +214,10 @@ bool workflow::stop()
   // abort running jobs
   {
     std::unique_lock<std::recursive_mutex> lock(m_jobsMutex);
-    for(auto e : m_jobs)
+    for(auto j : m_jobs)
     {
-      if(!e->isCompleted())
-      {
-        e->abort();
-        onJobAborted(e->UID());
-      }
+      if(!j->isCompleted())
+        j->abort();
     }
   }
 
@@ -191,6 +241,10 @@ bool workflow::stop()
 
 bool workflow::addJob(job *j)
 {
+  // notify
+  wf_notify("job_added", j->serialize().c_str());
+
+  // add
   std::unique_lock<std::recursive_mutex> lock(m_jobsMutex);
   m_jobs.push_back(j);
 
@@ -223,15 +277,14 @@ bool workflow::removeJob(const char *jobUID)
 
   if(j->isCompleted())
   {
+    // notify
+    wf_notify("job_removed", j->serialize().c_str());
+
     m_jobs.remove(j);
-    j->log("removeJob");
     delete j;
   }
   else
-  {
     j->abort();
-    onJobAborted(j->UID());
-  }
 
   return true;
 }
@@ -247,28 +300,8 @@ worker * workflow::getWorkerByName(const char *name)
   return NULL;
 }
 
-void workflow::onJobAborted(const char *jobUID)
+const char * workflow::pipe()
 {
-  for(auto e : m_workers)
-    e->onJobAborted(jobUID);
-}
+  return m_jWorkflow[PIPE_PARAM].GetString();
 
-std::string workflow::serialize()
-{
-  rapidjson::StringBuffer buffer;
-  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-  m_jWorkflow.Accept(writer);
-  return buffer.GetString();
-}
-
-SWorkflowPad workflow::serializeWorkflow()
-{
-  SWorkflowPad wp;
-  if(m_workers.size() > 0)
-  {
-    wp.worker = m_workers.front()->name();
-    m_workers.front()->serializeWorker(wp);
-  }
-
-  return wp;
 }

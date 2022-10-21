@@ -23,6 +23,9 @@
     <ClCompile Include="mformats_worker.cpp">
       <Filter>Source files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\deps\notifier.cpp">
+      <Filter>Common files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\deps\job.h">
@@ -39,6 +42,9 @@
     </ClInclude>
     <ClInclude Include="MLProtect_MFormats SDK.(subscription_valid_until_25_May_2023).h">
       <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\deps\notifier.h">
+      <Filter>Common files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

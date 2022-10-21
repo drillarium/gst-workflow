@@ -18,7 +18,7 @@ const char * severityToText(ELogSeverity severity)
 static void(*s_fn) (ELogSeverity, const char *, void *_private) = NULL;
 static void *s_fn_param = NULL;
 
-void wf_log_set_callback(void(*fn) (ELogSeverity severity, const char *message, void *_private), void *param)
+void log_set_callback(void(*fn) (ELogSeverity severity, const char *message, void *_private), void *param)
 {
   s_fn = fn;
   s_fn_param = param;

@@ -5,17 +5,12 @@
 class dummyWorker
 {
 public:
-  bool load(const char *param)
+  bool load(const char *param, const char *value)
   {
-    std::string token, value;
-    bool ret = parse_token(param, token, value);
-    if(ret)
-    {
-      if(!token.compare("name"))
-        m_name = value;
-    }
+    if(!_stricmp(param, "name"))
+      m_name = value;
 
-    return ret;
+    return true;
   }
   bool abort(const char *jobUID)
   {
@@ -23,31 +18,13 @@ public:
     return true;
   }
   virtual bool process(const char *job, const std::function<void(int)> &onProgress, const std::function<void(const char *, const char *)> &onCompleted, const std::function<void(const char *, const char *)> &onWork) = 0;
-  void setWorkflow(const SWorkflowPad &workflow)
-  {
-    m_workflow = workflow;
-
-    // prev workers
-    searchPrevWorkers(m_workflow);
-  }
-
-protected:
-  void searchPrevWorkers(const SWorkflowPad &wp)
-  {
-    for(auto n : wp.next)
-    {
-      if(!n.worker.compare(m_name))
-        m_prevWorkers.push_back(wp.worker);
-      else
-        searchPrevWorkers(n);
-    }
-  }
+  void setWorkflow(const char *workflow) { m_workflow = workflow; }
 
 protected:
   std::string m_name;
   std::list<std::string> m_prevWorkers;   // prev workers name
   bool m_abort = false;
-  SWorkflowPad m_workflow;                // workflow json data
+  std::string m_workflow;                 // workflow json data
 };
 
 /*
@@ -69,7 +46,7 @@ public:
     // work from previous worker required
     // list of previous workers by name
     for(auto e: m_prevWorkers)
-      rapidjson::Document prevWork = j.getWork(DONE_WORK, e.c_str());
+      rapidjson::Document prevWork; // = j.getWork(DONE_WORK, e.c_str());
 
     // process
     for(int i = 0; i < 100 && !m_abort; i += 10)
@@ -109,11 +86,13 @@ public:
  */
 const pluginWorker dummy2 = {
   "dummy_2",
+  "name",
   NULL
 };
 
 const pluginWorker s_workers = {
   "dummy_1",
+  "name",
   &dummy2
 };
 
@@ -152,15 +131,15 @@ bool destroy_worker(void *w)
   return true;
 }
 
-bool load_worker(void *w, const char *param)
+bool load_worker(void *w, const char *param, const char *value)
 {
   dummyWorker *dw = static_cast<dummyWorker *> (w);
-  return dw->load(param);
+  return dw->load(param, value);
 }
 
-void log_set_callback(void(*fn) (ELogSeverity severity, const char *message, void *_private), void *param)
+void log_set_callback_(void(*fn) (ELogSeverity severity, const char *message, void *_private), void *param)
 {
-  wf_log_set_callback(fn, param);
+  log_set_callback(fn, param);
 }
 
 bool abort_job(void *w, const char *jobUID)
@@ -175,8 +154,8 @@ bool process_job(void *w, const char *job, const std::function<void(int)> &onPro
   return dw->process(job, onProgress, onCompleted, onWork);
 }
 
-void set_workflow(void *w, const SWorkflowPad &wp)
+void set_workflow(void *w, const char *pipe)
 {
   dummyWorker *dw = static_cast<dummyWorker *> (w);
-  return dw->setWorkflow(wp);
+  return dw->setWorkflow(pipe);
 }

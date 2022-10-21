@@ -13,7 +13,7 @@ enum ELogSeverity
 };
 
 const char * severityToText(ELogSeverity severity);
-void wf_log_set_callback(void(*fn) (ELogSeverity severity, const char *message, void *_private), void *param);
+void log_set_callback(void(*fn) (ELogSeverity severity, const char *message, void *_private), void *param);
 
 void log_(ELogSeverity severity, const char *message);
 void log_critical(const char *format, ...);

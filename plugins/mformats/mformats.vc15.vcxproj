@@ -99,11 +99,13 @@
   <ItemGroup>
     <ClCompile Include="..\..\deps\job.cpp" />
     <ClCompile Include="..\..\deps\logger.cpp" />
+    <ClCompile Include="..\..\deps\notifier.cpp" />
     <ClCompile Include="mformats_worker.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\deps\job.h" />
     <ClInclude Include="..\..\deps\logger.h" />
+    <ClInclude Include="..\..\deps\notifier.h" />
     <ClInclude Include="..\..\deps\workflow_helper.h" />
     <ClInclude Include="mformats_worker.h" />
     <ClInclude Include="MLProtect_MFormats SDK.(subscription_valid_until_25_May_2023).h" />

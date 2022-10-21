@@ -2,10 +2,29 @@
 
 #include <string>
 #include <mutex>
+#include <list>
 #include "rapidjson/document.h"
 
 /*
- *
+{
+  uid: { JOB_UID },
+  name: { JOB_NAME },
+  status: { JOB_STATUS },
+  error: { JOB_ERROR }
+  log: [
+    { WORKER_NAME } : {
+      name: { WORKER_NAME },
+      type: { WORKER_TYPE },
+      status: { JOB_STATUS },
+      progress: { JOB_PROGRESS },
+      error: { JOB_ERROR }
+    }
+  ]
+}
+*/
+
+/*
+ * status
  */
 enum EJobStatus
 {
@@ -30,7 +49,16 @@ static EJobStatus jobTextToStatus(const char *status)
   return JOB_ST__Running;
 }
 
-const char DONE_WORK[] = "done";
+const char ABORTED_ERROR[] = "aborted";
+
+/*
+ *
+ */
+class jobListener
+{
+public:
+  virtual void onJobAborted(const char *jobUID) = 0;
+};
 
 /*
  *
@@ -42,23 +70,24 @@ public:
   job(const char *jobData);
   void setUID(const char *value);
   const char * UID();
+  void setName(const char *value);
+  const char * name();
   void setStatus(EJobStatus status);
   EJobStatus status();
-  bool update(const char *worker, rapidjson::Document &status);
-  void log(const char *message);
-  bool hasError(const char *worker);
-  const char * getError(const char *worker);
+  bool updateStatus(const char *worker, const char *type, rapidjson::Document &status);
+  rapidjson::Document status(const char *worker);
   bool isCompleted() { return status() == EJobStatus::JOB_ST__Completed; }
   bool abort();
   bool aborted();
-  bool setError(const char *worker, const char *error);
+  bool setError(const char *error);
   bool hasError();
   std::string serialize();
-  bool updateWork(const char *workStatus, const char *worker, rapidjson::Document &work);
-  rapidjson::Document getWork(const char *workStatus, const char *worker);
+  static void registerListener(jobListener *listener) { s_listeners.push_back(listener); }
+  static void unregisterListener(jobListener *listener) { s_listeners.remove(listener); }
 
 protected:
   rapidjson::Document m_jJob;           // JSON job
   std::recursive_mutex m_jobMutex;      // prevents data races to the job
+  static std::list< jobListener *> s_listeners;
 };
 

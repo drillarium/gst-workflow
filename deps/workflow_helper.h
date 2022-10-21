@@ -6,6 +6,7 @@
 struct pluginWorker
 {
   std::string name;
+  std::string params;
   const pluginWorker *next;
 };
 
@@ -28,11 +29,3 @@ static bool parse_token(const char *_param, std::string &token, std::string &val
 
   return true;
 }
-
-/* workflow struct */
-struct SWorkflowPad
-{
-  std::string cond;
-  std::string worker;
-  std::list<SWorkflowPad> next;
-};

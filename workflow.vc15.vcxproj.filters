@@ -41,9 +41,6 @@
     <ClCompile Include="threadPool.cpp">
       <Filter>Source files</Filter>
     </ClCompile>
-    <ClCompile Include="terminator.cpp">
-      <Filter>workers</Filter>
-    </ClCompile>
     <ClCompile Include="plugin.cpp">
       <Filter>workers</Filter>
     </ClCompile>
@@ -56,6 +53,12 @@
     <ClCompile Include="deps\logger.cpp">
       <Filter>Common files</Filter>
     </ClCompile>
+    <ClCompile Include="deps\notifier.cpp">
+      <Filter>Common files</Filter>
+    </ClCompile>
+    <ClCompile Include="process.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="workflow.h">
@@ -67,28 +70,13 @@
     <ClInclude Include="deps\rapidjson-master\include\rapidjson\document.h">
       <Filter>rapidjson</Filter>
     </ClInclude>
-    <ClInclude Include="fakesrc.h">
-      <Filter>workers</Filter>
-    </ClInclude>
-    <ClInclude Include="fakesink.h">
-      <Filter>workers</Filter>
-    </ClInclude>
-    <ClInclude Include="delay.h">
-      <Filter>workers</Filter>
-    </ClInclude>
     <ClInclude Include="threadPool.h">
       <Filter>Header files</Filter>
-    </ClInclude>
-    <ClInclude Include="terminator.h">
-      <Filter>workers</Filter>
     </ClInclude>
     <ClInclude Include="plugin.h">
       <Filter>workers</Filter>
     </ClInclude>
     <ClInclude Include="filewatcher.h">
-      <Filter>workers</Filter>
-    </ClInclude>
-    <ClInclude Include="filesystemwatcher.h">
       <Filter>workers</Filter>
     </ClInclude>
     <ClInclude Include="deps\job.h">
@@ -99,6 +87,12 @@
     </ClInclude>
     <ClInclude Include="deps\workflow_helper.h">
       <Filter>Common files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\notifier.h">
+      <Filter>Common files</Filter>
+    </ClInclude>
+    <ClInclude Include="process.h">
+      <Filter>Header files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -92,28 +92,26 @@
     <ClCompile Include="delay.cpp" />
     <ClCompile Include="deps\job.cpp" />
     <ClCompile Include="deps\logger.cpp" />
+    <ClCompile Include="deps\notifier.cpp" />
     <ClCompile Include="fakesink.cpp" />
     <ClCompile Include="fakesrc.cpp" />
     <ClCompile Include="filesystemwatcher.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="plugin.cpp" />
-    <ClCompile Include="terminator.cpp" />
+    <ClCompile Include="process.cpp" />
     <ClCompile Include="threadPool.cpp" />
     <ClCompile Include="worker.cpp" />
     <ClCompile Include="workflow.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="delay.h" />
     <ClInclude Include="deps\job.h" />
     <ClInclude Include="deps\logger.h" />
+    <ClInclude Include="deps\notifier.h" />
     <ClInclude Include="deps\rapidjson-master\include\rapidjson\document.h" />
     <ClInclude Include="deps\workflow_helper.h" />
-    <ClInclude Include="fakesink.h" />
-    <ClInclude Include="fakesrc.h" />
-    <ClInclude Include="filesystemwatcher.h" />
     <ClInclude Include="filewatcher.h" />
     <ClInclude Include="plugin.h" />
-    <ClInclude Include="terminator.h" />
+    <ClInclude Include="process.h" />
     <ClInclude Include="threadPool.h" />
     <ClInclude Include="worker.h" />
     <ClInclude Include="workflow.h" />

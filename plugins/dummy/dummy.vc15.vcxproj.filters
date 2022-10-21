@@ -23,6 +23,9 @@
     <ClCompile Include="..\..\deps\logger.cpp">
       <Filter>Common files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\deps\notifier.cpp">
+      <Filter>Common files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dummy.h">
@@ -35,6 +38,9 @@
       <Filter>Common files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\deps\workflow_helper.h">
+      <Filter>Common files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\deps\notifier.h">
       <Filter>Common files</Filter>
     </ClInclude>
   </ItemGroup>

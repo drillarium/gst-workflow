@@ -9,20 +9,15 @@
 class MFormatsTranscoderWorker
 {
 public:
-  bool load(const char *param)
+  bool load(const char *param, const char *value)
   {
-    std::string token, value;
-    bool ret = parse_token(param, token, value);
-    if(ret)
-    {
-      if(!token.compare("name"))
+    if(!_stricmp(param, "name"))
         m_name = value;
 
       // TODO: transcoding parameters
       //       output folder
-    }
 
-    return ret;
+    return true;
   }
   bool abort(const char *jobUID)
   {
@@ -35,7 +30,7 @@ public:
     job j(jobData);
 
     // only one previous worker supported
-    rapidjson::Document prevWork = j.getWork(DONE_WORK, m_prevWorkers.front().c_str());
+    rapidjson::Document prevWork; // = j.getWork(DONE_WORK, m_prevWorkers.front().c_str());
 
     // process
     for(int i = 0; i < 100 && !m_abort; i += 10)
@@ -58,25 +53,10 @@ public:
 
     return true;
   }
-  void setWorkflow(const SWorkflowPad &workflow)
+  void setWorkflow(const char *pipe)
   {
     // workflow
-    m_workflow = workflow;
-
-    // prev workers
-    searchPrevWorkers(m_workflow);
-  }
-
-protected:
-  void searchPrevWorkers(const SWorkflowPad &wp)
-  {
-    for(auto n : wp.next)
-    {
-      if(!n.worker.compare(m_name))
-        m_prevWorkers.push_back(wp.worker);
-      else
-        searchPrevWorkers(n);
-    }
+    m_workflow = pipe;
   }
 
 protected:
@@ -102,7 +82,7 @@ protected:
   std::string m_name;
   std::list<std::string> m_prevWorkers;   // prev workers name
   bool m_abort = false;
-  SWorkflowPad m_workflow;                // workflow json data
+  std::string m_workflow;                 // workflow json data
 };
 
 /*
@@ -110,6 +90,7 @@ protected:
  */
 const pluginWorker trancoder = {
   "mf_transcoder",
+  "name",
   NULL
 };
 
@@ -152,15 +133,15 @@ bool destroy_worker(void *w)
   return true;
 }
 
-bool load_worker(void *w, const char *param)
+bool load_worker(void *w, const char *param, const char *value)
 {
   MFormatsTranscoderWorker *tw = static_cast<MFormatsTranscoderWorker *> (w);
-  return tw->load(param);
+  return tw->load(param, value);
 }
 
-void log_set_callback(void(*fn) (ELogSeverity severity, const char *message, void *_private), void *param)
+void log_set_callback_(void(*fn) (ELogSeverity severity, const char *message, void *_private), void *param)
 {
-  wf_log_set_callback(fn, param);
+  log_set_callback(fn, param);
 }
 
 bool abort_job(void *w, const char *jobUID)
@@ -175,8 +156,8 @@ bool process_job(void *w, const char *job, const std::function<void(int)> &onPro
   return tw->process(job, onProgress, onCompleted, onWork);
 }
 
-void set_workflow(void *w, const SWorkflowPad &wp)
+void set_workflow(void *w, const char *pipe)
 {
   MFormatsTranscoderWorker *tw = static_cast<MFormatsTranscoderWorker *> (w);
-  return tw->setWorkflow(wp);
+  return tw->setWorkflow(pipe);
 }
