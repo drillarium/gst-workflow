@@ -16,6 +16,7 @@ var workflow = ""; // the workflow
 var name_param = ""; // param name
 var delay_param = 1; // param delay
 var worker = ""; // worker (dumm_app_worker_1 or dumm_app_worker_2)
+var abort = false;
 for (var i = 0; i < args.length; i++) {
     if (args[i] == "-i")
         inspect = true;
@@ -59,13 +60,13 @@ function sleep(ms) {
 function doWork1() {
     return __awaiter(this, void 0, void 0, function* () {
         log_message("info", "work started");
-        for (var i = 0; i < delay_param; i++) {
+        for (var i = 0; i < delay_param && !abort; i++) {
             yield sleep(1000);
             notifyProgress((100 / delay_param) * (i + 1));
             notifyWork({ sleep: i });
         }
         log_message("info", "work ended");
-        notifyCompletion(true);
+        notifyCompletion(abort ? false : true, abort ? "aborted" : "");
     });
 }
 // work2
@@ -88,4 +89,13 @@ else {
     else if (worker == "dumm_app_worker_2")
         doWork2();
 }
+// abort
+var command = "";
+process.stdin.on('data', (chunk) => {
+    command += chunk;
+});
+process.stdin.on('end', () => {
+    if (command.indexOf("abort") >= 0)
+        abort = true;
+});
 //# sourceMappingURL=dummy_app.js.map

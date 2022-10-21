@@ -7,6 +7,7 @@ var workflow: string = "";      // the workflow
 var name_param: string = "";    // param name
 var delay_param: number = 1;    // param delay
 var worker: string = "";        // worker (dumm_app_worker_1 or dumm_app_worker_2)
+var abort: boolean = false;
 
 for(var i=0; i < args.length; i++) {
     if(args[i] == "-i")
@@ -57,7 +58,7 @@ function sleep(ms: number) {
 async function doWork1() {
     log_message("info", "work started");
 
-    for(var i = 0; i < delay_param; i++) {
+    for(var i = 0; i < delay_param && !abort; i++) {
         await sleep(1000);
         notifyProgress((100/delay_param) * (i+1));
         notifyWork({sleep: i});
@@ -65,7 +66,7 @@ async function doWork1() {
 
     log_message("info", "work ended");
 
-    notifyCompletion(true);
+    notifyCompletion(abort? false : true, abort? "aborted" : "");
 }
 
 // work2
@@ -90,3 +91,14 @@ else {
     else if(worker == "dumm_app_worker_2")
         doWork2();
 }
+
+// abort
+var command: string = "";
+process.stdin.on('data', (chunk) => {
+    command += chunk;
+});
+
+process.stdin.on('end', () => {
+    if(command.indexOf("abort") >= 0)
+        abort = true;
+});

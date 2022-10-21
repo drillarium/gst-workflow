@@ -54,7 +54,7 @@ public:
               }
               catch(...)
               {
-                _pclose(pipe);
+
               }
               _pclose(pipe);
             }
@@ -185,14 +185,14 @@ bool process::doJob(job *j, std::string &condition, std::string &error)
 
   // process
   bool finished = false, success = false;
-  FILE *pipe = _popen(processArgs.c_str(), "r");
-  if(pipe)
+  m_pipe = _popen(processArgs.c_str(), "r");
+  if(m_pipe)
   {
     try
     {
       int jobProgress = 0;
       char buffer[1024];
-      while(fgets(buffer, sizeof buffer, pipe) != NULL)
+      while(fgets(buffer, sizeof buffer, m_pipe) != NULL)
       {
         rapidjson::Document doc;
         doc.Parse(buffer);
@@ -236,9 +236,10 @@ bool process::doJob(job *j, std::string &condition, std::string &error)
     }
     catch (...)
     {
-      _pclose(pipe);
+
     }
-    _pclose(pipe);
+
+    _pclose(m_pipe);
   }
 
   if(!finished)
@@ -259,5 +260,7 @@ bool process::load(const char *param, const char *value)
 
 void process::onJobAborted(const char *jobUID)
 {
-  // TODO
+  if(!m_pipe) return;
+
+ fputs("abort", m_pipe);
 }

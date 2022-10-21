@@ -18,4 +18,5 @@ protected:
 
 protected:
   std::map<std::string, std::string> m_params;
+  FILE *m_pipe = NULL;
 };
