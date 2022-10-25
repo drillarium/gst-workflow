@@ -9958,3 +9958,7 @@ apps/dummy_app/node_modules/yargs/package.json
 apps/dummy_app/node_modules/yargs/README.md
 apps/dummy_app/node_modules/yargs/yargs
 apps/dummy_app/node_modules/yargs/yargs.mjs
+*.iobj
+*.ipdb
+x64/Release/workflow.iobj
+x64/Release/workflow.ipdb
