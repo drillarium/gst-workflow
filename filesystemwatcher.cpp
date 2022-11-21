@@ -14,7 +14,7 @@ public:
   {
     bool ret = worker::start();
     if(!ret)
-      return false ;
+      return false;
 
     m_threadPool.queueJob([this] {
       // Create a FileWatcher instance that will check the current folder for changes every 5 seconds
